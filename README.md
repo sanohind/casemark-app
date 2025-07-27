@@ -115,19 +115,6 @@ php artisan serve
 
 Buka browser dan akses: `http://localhost:8000/casemark`
 
-## Default Login Credentials
-
-### Admin Account
-
--   **Email:** admin@casemark.com
--   **Password:** password
--   **Role:** Admin (full access)
-
-### Operator Account
-
--   **Email:** operator1@casemark.com
--   **Password:** password
--   **Role:** Operator (scanning only)
 
 ## File Structure
 
