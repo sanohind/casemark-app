@@ -79,7 +79,7 @@
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $case->progress }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         @php
-                        $lastPacked = $case->scanHistory()->where('status', 'packed')->latest()->first();
+                        $lastPacked = $case->scanHistory()->where('status', 'packed')->orderBy('scanned_at', 'desc')->first();
                         @endphp
                         {{ $lastPacked ? $lastPacked->packing_date->format('d/m/Y H:i') : '-' }}
                     </td>

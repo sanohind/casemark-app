@@ -50,9 +50,9 @@
                 <div class="space-y-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Destination</label>
-                        <input type="text" name="destination" value="{{ old('destination', 'PEMSB') }}"
+                        <input type="text" name="destination" value="{{ old('destination', '') }}"
                             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            required>
+                            placeholder="SMDD" required>
                         @error('destination')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
@@ -60,8 +60,9 @@
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Order No.</label>
-                        <input type="text" name="order_no" value="{{ old('order_no', '0') }}"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <input type="text" name="order_no" value="{{ old('order_no') }}"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500
+                            " placeholder="J986382T1G" required>
                         @error('order_no')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
@@ -69,7 +70,7 @@
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Prod Month</label>
-                        <input type="text" name="prod_month" value="{{ old('prod_month', date('Ym')) }}"
+                        <input type="text" name="prod_month" value=""
                             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                             placeholder="YYYYMM" required>
                         @error('prod_month')
@@ -84,7 +85,7 @@
                         <label class="block text-sm font-medium text-gray-700 mb-1">Case No.</label>
                         <input type="text" name="case_no" value="{{ old('case_no') }}"
                             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="I2E-SAN-00435" required>
+                            placeholder="KSJ-BOY-37389" required>
                         @error('case_no')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
@@ -92,7 +93,7 @@
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">C/SIZE (CM)</label>
-                        <input type="text" name="case_size" value="{{ old('case_size', '149x113x75') }}"
+                        <input type="text" name="case_size" value="{{ old('case_size', '') }}"
                             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                             placeholder="149x113x75" required>
                         @error('case_size')
@@ -104,7 +105,7 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">G/W (KGS)</label>
                             <input type="number" step="0.01" name="gross_weight"
-                                value="{{ old('gross_weight', '136') }}"
+                                value="{{ old('gross_weight', '') }}"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 required>
                             @error('gross_weight')
@@ -114,7 +115,7 @@
 
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">N/W (KGS)</label>
-                            <input type="number" step="0.01" name="net_weight" value="{{ old('net_weight', '54') }}"
+                            <input type="number" step="0.01" name="net_weight" value="{{ old('net_weight', '') }}"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 required>
                             @error('net_weight')
@@ -122,6 +123,29 @@
                             @enderror
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Box Details Preview Section -->
+        <div class="mb-8" id="boxDetailsPreview" style="display: none;">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Box Details Preview</h2>
+            <div class="bg-white shadow-md rounded-lg overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-blue-600">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">NO.</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">BOX NO.</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">PART NO</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">PART NAME</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">QTY/BOX</th>
+                            </tr>
+                        </thead>
+                        <tbody id="boxDetailsTableBody" class="bg-white divide-y divide-gray-200">
+                            <!-- Data akan diisi secara dinamis -->
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -170,59 +194,192 @@ document.addEventListener('DOMContentLoaded', function() {
     const fileInput = document.getElementById('excel_file');
     const fileName = document.getElementById('fileName');
     const uploadForm = document.getElementById('uploadForm');
-    const uploadBtn = document.getElementById('uploadBtn');
-    const uploadText = document.getElementById('uploadText');
-    const uploadLoading = document.getElementById('uploadLoading');
-
-    // File input change handler
+    
     fileInput.addEventListener('change', function(e) {
         if (e.target.files.length > 0) {
             const file = e.target.files[0];
-            fileName.textContent = `Selected: ${file.name}`;
-            fileName.classList.remove('hidden');
-
-            // Auto-generate case number based on current timestamp
-            const caseInput = document.querySelector('input[name="case_no"]');
-            if (!caseInput.value) {
-                const timestamp = new Date().getTime().toString().slice(-5);
-                caseInput.value = `I2E-SAN-${timestamp}`;
-            }
-        }
-    });
-
-    // Form submit handler
-    uploadForm.addEventListener('submit', function() {
-        uploadBtn.disabled = true;
-        uploadText.classList.add('hidden');
-        uploadLoading.classList.remove('hidden');
-    });
-
-    // Drag and drop functionality
-    const dropZone = document.querySelector('.border-dashed');
-
-    dropZone.addEventListener('dragover', function(e) {
-        e.preventDefault();
-        dropZone.classList.add('border-blue-400', 'bg-blue-50');
-    });
-
-    dropZone.addEventListener('dragleave', function(e) {
-        e.preventDefault();
-        dropZone.classList.remove('border-blue-400', 'bg-blue-50');
-    });
-
-    dropZone.addEventListener('drop', function(e) {
-        e.preventDefault();
-        dropZone.classList.remove('border-blue-400', 'bg-blue-50');
-
-        const files = e.dataTransfer.files;
-        if (files.length > 0) {
-            fileInput.files = files;
-            const event = new Event('change', {
-                bubbles: true
+            fileName.textContent = `Memproses: ${file.name}`;
+            fileName.classList.remove('hidden', 'text-red-600', 'text-green-600');
+            fileName.classList.add('text-blue-600');
+            
+            // Tambahkan loading state
+            const uploadBtn = document.getElementById('uploadBtn');
+            uploadBtn.disabled = true;
+            uploadBtn.classList.add('opacity-50');
+            
+            previewExcelFile(file).finally(() => {
+                uploadBtn.disabled = false;
+                uploadBtn.classList.remove('opacity-50');
             });
-            fileInput.dispatchEvent(event);
         }
     });
+
+    async function previewExcelFile(file) {
+        const formData = new FormData();
+        formData.append('excel_file', file);
+        formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+        
+        try {
+            const response = await fetch('/api/casemark/preview-excel', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'Accept': 'application/json',
+                }
+            });
+
+            const result = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(result.message || 'Gagal memproses file');
+            }
+
+            if (result.success) {
+                // Update semua field form
+                updateFormFields(result.data);
+                fileName.textContent = `File dipilih: ${file.name}`;
+                fileName.classList.remove('text-blue-600', 'text-red-600');
+                fileName.classList.add('text-green-600');
+                
+                // Hapus pesan error jika ada
+                const existingError = document.querySelector('.text-red-600');
+                if (existingError) {
+                    existingError.remove();
+                }
+                
+                // Debug information (akan dihapus di production)
+                if (result.debug) {
+                    console.log('Debug info:', result.debug);
+                    console.log('Extracted data:', result.data);
+                    
+                    // Tampilkan debug info di halaman untuk troubleshooting
+                    const debugDiv = document.createElement('div');
+                    debugDiv.className = 'mt-4 p-3 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded text-xs';
+                    debugDiv.innerHTML = `
+                        <strong>Debug Info:</strong><br>
+                        <strong>Column Mapping:</strong> ${JSON.stringify(result.debug.column_mapping)}<br>
+                        <strong>Row 19:</strong> ${JSON.stringify(result.debug.row19)}<br>
+                        <strong>Row 20:</strong> ${JSON.stringify(result.debug.row20)}<br>
+                        <strong>Row 21:</strong> ${JSON.stringify(result.debug.row21)}<br>
+                        <strong>Row 22:</strong> ${JSON.stringify(result.debug.row22)}<br>
+                        <strong>Row 23:</strong> ${JSON.stringify(result.debug.row23)}<br>
+                        <strong>Extracted Values:</strong> ${JSON.stringify(result.debug.extracted_values)}<br>
+                        <strong>Content List Preview:</strong> ${JSON.stringify(result.debug.content_list_preview)}
+                    `;
+                    
+                    const previewSection = document.querySelector('.mb-8');
+                    previewSection.appendChild(debugDiv);
+                    
+                    // Hapus debug info setelah 10 detik
+                    setTimeout(() => {
+                        debugDiv.remove();
+                    }, 10000);
+                }
+            } else {
+                throw new Error(result.message || 'Format file tidak sesuai');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            fileName.textContent = `Error: ${error.message}`;
+            fileName.classList.remove('text-blue-600', 'text-green-600');
+            fileName.classList.add('text-red-600');
+            
+            // Tampilkan pesan error yang lebih detail
+            const errorMessage = document.createElement('div');
+            errorMessage.className = 'mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded';
+            errorMessage.innerHTML = `<i class="fas fa-exclamation-triangle mr-2"></i>Error: ${error.message}`;
+            
+            const previewSection = document.querySelector('.mb-8');
+            previewSection.appendChild(errorMessage);
+            
+            // Hapus pesan setelah 5 detik
+            setTimeout(() => {
+                errorMessage.remove();
+            }, 5000);
+        }
+    }
+
+    function updateFormFields(data) {
+        // Mapping antara field form dan key dari response
+        const fieldMap = {
+            'destination': 'destination',
+            'order_no': 'order_no',
+            'prod_month': 'prod_month',
+            'case_no': 'case_no',
+            'case_size': 'case_size',
+            'gross_weight': 'gross_weight',
+            'net_weight': 'net_weight'
+        };
+
+        // Update setiap field
+        Object.entries(fieldMap).forEach(([fieldName, dataKey]) => {
+            const input = document.querySelector(`input[name="${fieldName}"]`);
+            if (input && data[dataKey]) {
+                input.value = data[dataKey];
+                console.log(`Mengisi ${fieldName} dengan:`, data[dataKey]);
+                
+                // Tambahkan visual feedback
+                input.classList.add('bg-green-50', 'border-green-300');
+                setTimeout(() => {
+                    input.classList.remove('bg-green-50', 'border-green-300');
+                }, 2000);
+            }
+        });
+
+        // Update Box Details Preview
+        updateBoxDetailsPreview(data);
+
+        // Tampilkan pesan sukses
+        const successMessage = document.createElement('div');
+        successMessage.className = 'mt-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded';
+        successMessage.innerHTML = '<i class="fas fa-check-circle mr-2"></i>Data berhasil diekstrak dari Excel file!';
+        
+        const previewSection = document.querySelector('.mb-8');
+        previewSection.appendChild(successMessage);
+        
+        // Hapus pesan setelah 5 detik
+        setTimeout(() => {
+            successMessage.remove();
+        }, 5000);
+    }
+
+    function updateBoxDetailsPreview(data) {
+        const boxDetailsPreview = document.getElementById('boxDetailsPreview');
+        const tableBody = document.getElementById('boxDetailsTableBody');
+        
+        // Tampilkan section preview
+        boxDetailsPreview.style.display = 'block';
+        
+        // Kosongkan tabel
+        tableBody.innerHTML = '';
+        
+        // Jika ada data content list preview
+        if (data.content_list_preview && data.content_list_preview.length > 0) {
+            data.content_list_preview.forEach((item, index) => {
+                const row = document.createElement('tr');
+                row.className = index % 2 === 0 ? 'bg-white' : 'bg-gray-50';
+                
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.no || ''}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.box_no || ''}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.part_no || ''}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.part_name || ''}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.quantity || '0'}</td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+        } else {
+            // Jika tidak ada data, tampilkan pesan
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">
+                    Tidak ada data box details yang ditemukan
+                </td>
+            `;
+            tableBody.appendChild(row);
+        }
+    }
 });
 </script>
 @endsection

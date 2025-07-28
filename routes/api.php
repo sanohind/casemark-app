@@ -20,6 +20,9 @@ Route::middleware('api')->group(function () {
         Route::post('/scan', [CaseMarkApiController::class, 'processScan'])->name('scan');
         Route::post('/mark-packed', [CaseMarkApiController::class, 'markAsPacked'])->name('mark.packed');
         
+        // Excel preview
+        Route::post('/preview-excel', [CaseMarkApiController::class, 'previewExcel'])->name('preview.excel');
+        
         // Container info
         Route::get('/container-info/{caseNo}', [CaseMarkApiController::class, 'getContainerInfo'])->name('container.info');
         

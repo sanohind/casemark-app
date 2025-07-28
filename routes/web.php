@@ -22,6 +22,7 @@ Route::prefix('casemark')->name('casemark.')->group(function () {
     // Upload Excel
     Route::get('/upload', [CaseMarkController::class, 'upload'])->name('upload');
     Route::post('/upload', [CaseMarkController::class, 'uploadExcel'])->name('upload.excel');
+    Route::post('/upload/preview', [CaseMarkController::class, 'previewExcel'])->name('upload.preview');
     
     // List Case Mark
     Route::get('/list', [CaseMarkController::class, 'listCaseMark'])->name('list');
