@@ -69,81 +69,65 @@
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
-                @forelse($contentLists as $index => $content)
-                <tr class="{{ $index % 2 == 0 ? 'bg-white' : 'bg-gray-50' }}">
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $index + 1 }}.</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $content->part_no }}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $content->part_name }}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $content->quantity }}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        @if($content->isScanned())
-                        <span
-                            class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                            {{ $content->quantity }}/{{ $content->quantity }}
-                        </span>
-                        @else
-                        <span
-                            class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
-                            0/{{ $content->quantity }}
-                        </span>
-                        @endif
+                <tr>
+                    <td colspan="5" class="px-6 py-4 text-center text-lg font-bold">
+                        Progress: <span class="inline-flex px-2 py-1 text-base font-semibold rounded-full bg-yellow-100 text-yellow-800">{{ $progress }}</span>
                     </td>
                 </tr>
-                @empty
-                <tr>
-                    <td colspan="5" class="px-6 py-4 text-center text-gray-500">No content list available</td>
-                </tr>
-                @endforelse
             </tbody>
         </table>
     </div>
 
-    <!-- Box Details Table -->
+    <!-- Box Details Table (Scanned Only) -->
     <div class="mt-8">
-        <h2 class="text-lg font-semibold text-gray-900 mb-4">Box Details</h2>
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Box Scanned History</h2>
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-blue-900">
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">No.</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Box No.
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Part No
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Part
-                            Name</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Qty/box
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Status
-                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Box No.</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Part No</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Part Name</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Qty/box</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Scan Time</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
-                    @forelse($contentLists as $index => $content)
-                    <tr class="{{ $index % 2 == 0 ? 'bg-white' : 'bg-gray-50' }}">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $index + 1 }}.</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $content->box_no }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $content->part_no }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $content->part_name }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $content->quantity }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            @if($content->isScanned())
-                            <span
-                                class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                                Scanned
-                            </span>
-                            @else
-                            <span
-                                class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
-                                Pending
-                            </span>
-                            @endif
-                        </td>
-                    </tr>
+                    @forelse($scanHistory as $index => $scan)
+                        @php
+                            $content = $contentLists->first(function($item) use ($scan) {
+                                return $item->box_no === $scan->box_no && $item->part_no === $scan->part_no;
+                            });
+                        @endphp
+                        <tr class="{{ $index % 2 == 0 ? 'bg-white' : 'bg-gray-50' }}">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $index + 1 }}.</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $scan->box_no }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $scan->part_no }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                @if($content)
+                                    {{ $content->part_name }}
+                                @else
+                                    <span class="text-red-600 font-bold">Tidak Cocok!</span>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {{ $scan->scanned_qty }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                                    Scanned
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {{ $scan->scanned_at ? $scan->scanned_at->format('d/m/Y H:i') : '-' }}
+                            </td>
+                        </tr>
                     @empty
-                    <tr>
-                        <td colspan="6" class="px-6 py-4 text-center text-gray-500">No box details available</td>
-                    </tr>
+                        <tr>
+                            <td colspan="7" class="px-6 py-4 text-center text-gray-500">Belum ada box yang di-scan</td>
+                        </tr>
                     @endforelse
                 </tbody>
             </table>

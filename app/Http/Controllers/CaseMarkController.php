@@ -25,8 +25,15 @@ class CaseMarkController extends Controller
         if ($caseNo) {
             $case = CaseModel::where('case_no', $caseNo)->firstOrFail();
             $contentLists = $case->contentLists()->get();
+            // Fetch only scanned boxes for this case
+            $scanHistory = $case->scanHistory()->where('status', 'scanned')->orderBy('scanned_at', 'desc')->get();
 
-            return view('casemark.content-list', compact('case', 'contentLists'));
+            // Calculate progress: total scanned quantity / total quantity
+            $totalScannedQty = $scanHistory->sum('scanned_qty');
+            $totalQty = $contentLists->sum('quantity');
+            $progress = $totalQty > 0 ? $totalScannedQty . '/' . $totalQty : '0/0';
+
+            return view('casemark.content-list', compact('case', 'contentLists', 'scanHistory', 'progress'));
         }
 
         return view('casemark.content-list');
