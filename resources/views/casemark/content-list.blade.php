@@ -13,19 +13,19 @@
     <div class="mb-8">
         <div class="bg-white rounded-lg shadow p-6">
             <h2 class="text-lg font-semibold text-gray-900 mb-4">Scan Container Barcode</h2>
-            
+
             <div class="mb-4">
                 <label for="containerBarcode" class="block text-sm font-medium text-gray-700 mb-2">
                     Container Barcode
                 </label>
-                <input type="text" 
-                       id="containerBarcode" 
-                       class="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg font-mono"
-                       placeholder="Scan container barcode to load case data..."
-                       autofocus>
+                <input type="text"
+                    id="containerBarcode"
+                    class="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg font-mono"
+                    placeholder="Scan container barcode to load case data..."
+                    autofocus>
             </div>
-            
-            <button type="button" onclick="scanContainer()" 
+
+            <button type="button" onclick="scanContainer()"
                 class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-md font-medium flex items-center">
                 <i class="fas fa-qrcode mr-2"></i>
                 Scan Container
@@ -37,18 +37,18 @@
     <div id="boxScanner" class="mb-8 hidden">
         <div class="bg-white rounded-lg shadow p-6">
             <h2 class="text-lg font-semibold text-gray-900 mb-4">Scan Box Barcode</h2>
-            
+
             <div class="mb-4">
                 <label for="boxBarcode" class="block text-sm font-medium text-gray-700 mb-2">
                     Box Barcode
                 </label>
-                <input type="text" 
-                       id="boxBarcode" 
-                       class="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-lg font-mono"
-                       placeholder="Scan box barcode...">
+                <input type="text"
+                    id="boxBarcode"
+                    class="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-lg font-mono"
+                    placeholder="Scan box barcode...">
             </div>
-            
-            <button type="button" onclick="scanBox()" 
+
+            <button type="button" onclick="scanBox()"
                 class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-md font-medium flex items-center">
                 <i class="fas fa-barcode mr-2"></i>
                 Scan Box
@@ -159,7 +159,7 @@
                 <h3 class="text-lg font-semibold text-green-900">All Items Scanned!</h3>
             </div>
             <p class="text-green-700 mb-4">All items have been successfully scanned.</p>
-            <button type="button" onclick="submitCase()" 
+            <button type="button" onclick="submitCase()"
                 class="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-md font-medium text-lg">
                 <i class="fas fa-check mr-2"></i>
                 Submit Case
@@ -193,212 +193,206 @@
 
 @section('scripts')
 <script>
-let currentCaseId = null;
-let currentCaseData = null;
+    let currentCaseId = null;
+    let currentCaseData = null;
 
-// Container barcode scanner
-document.getElementById('containerBarcode').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-        scanContainer();
-    }
-});
-
-// Auto-enter for container barcode (trigger scan automatically after barcode input)
-document.getElementById('containerBarcode').addEventListener('input', function(e) {
-    const barcode = this.value;
-    // Auto-trigger scan if barcode length is sufficient (assuming barcode has minimum length)
-    if (barcode.length >= 20) {
-        // Small delay to ensure barcode is completely scanned
-        setTimeout(() => {
-            if (this.value === barcode) { // Check if value hasn't changed (barcode complete)
-                scanContainer();
-            }
-        }, 100);
-    }
-});
-
-// Box barcode scanner
-document.getElementById('boxBarcode').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-        scanBox();
-    }
-});
-
-// Auto-enter for box barcode (trigger scan automatically after barcode input)
-document.getElementById('boxBarcode').addEventListener('input', function(e) {
-    const barcode = this.value;
-    // Auto-trigger scan if barcode contains '#' (indicates complete box barcode)
-    if (barcode.includes('#')) {
-        // Small delay to ensure barcode is completely scanned
-        setTimeout(() => {
-            if (this.value === barcode) { // Check if value hasn't changed (barcode complete)
-                scanBox();
-            }
-        }, 100);
-    }
-});
-
-function scanContainer() {
-    const barcode = document.getElementById('containerBarcode').value;
-    
-    if (!barcode) {
-        showErrorToast('Please enter container barcode');
-        return;
-    }
-
-    $.ajax({
-        url: '/api/casemark/scan-container',
-        method: 'POST',
-        data: {
-            barcode: barcode,
-            _token: $('meta[name="csrf-token"]').attr('content')
-        },
-        success: function(response) {
-            if (response.success) {
-                currentCaseId = response.data.case.id;
-                currentCaseData = response.data;
-                
-                // Show case information
-                displayCaseInfo(response.data.case);
-                
-                // Show box scanner
-                document.getElementById('boxScanner').classList.remove('hidden');
-                
-                // Update progress tables
-                updateProgressTables(response.data);
-                
-                // Show success notification
-                showSuccessToast('Container scanned successfully!', 'Please scan box barcodes now.');
-                
-                // Focus on box scanner
-                setTimeout(() => {
-                    document.getElementById('boxBarcode').focus();
-                }, 2000);
-                
-                // Clear container barcode input
-                document.getElementById('containerBarcode').value = '';
-                
-            } else {
-                showErrorModal(response.message);
-            }
-        },
-        error: function(xhr) {
-            const response = xhr.responseJSON;
-            showErrorToast(response ? response.message : 'Error scanning container');
-            
-            // PERBAIKAN: Clear input field even when error occurs
-            setTimeout(() => {
-                document.getElementById('containerBarcode').value = '';
-                document.getElementById('containerBarcode').focus();
-            }, 2000); // Clear after 2 seconds to give user time to read error
+    // Container barcode scanner
+    document.getElementById('containerBarcode').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            scanContainer();
         }
     });
-}
 
-function scanBox() {
-    const barcode = document.getElementById('boxBarcode').value;
-    
-    if (!barcode) {
-        showErrorToast('Please enter box barcode');
-        return;
-    }
-    
-    if (!currentCaseId) {
-        showErrorToast('Please scan container first');
-        return;
-    }
-    
-    $.ajax({
-        url: '/api/casemark/scan-box',
-        method: 'POST',
-        data: {
-            barcode: barcode,
-            case_id: currentCaseId,
-            _token: $('meta[name="csrf-token"]').attr('content')
-        },
-        success: function(response) {
-            if (response.success) {
-                // Update progress tables
-                updateProgressTables(currentCaseData);
-                
-                // Show success notification
-                showSuccessToast('Box scanned successfully!', 'Box sequence: ' + response.data.sequence);
-                
-                // Check if all items are scanned
-                checkCompletion();
-                
-                // Focus back on box scanner
-                setTimeout(() => {
-                    document.getElementById('boxBarcode').focus();
-                }, 2000);
-                
-                // Clear box barcode input
-                document.getElementById('boxBarcode').value = '';
-                
-            } else {
-                showErrorModal(response.message);
-            }
-        },
-        error: function(xhr) {
-            const response = xhr.responseJSON;
-            showErrorToast(response ? response.message : 'Error scanning box');
-            
-            // PERBAIKAN: Clear input field even when error occurs
+    // Auto-enter for container barcode (trigger scan automatically after barcode input)
+    document.getElementById('containerBarcode').addEventListener('input', function(e) {
+        const barcode = this.value;
+        // Auto-trigger scan if barcode length is sufficient (assuming barcode has minimum length)
+        if (barcode.length >= 20) {
+            // Small delay to ensure barcode is completely scanned
             setTimeout(() => {
-                document.getElementById('boxBarcode').value = '';
-                document.getElementById('boxBarcode').focus();
-            }, 2000); // Clear after 2 seconds to give user time to read error
+                if (this.value === barcode) { // Check if value hasn't changed (barcode complete)
+                    scanContainer();
+                }
+            }, 100);
         }
     });
-}
 
-// PERBAIKAN: Tambahkan fungsi untuk handle error modal
-function showErrorModal(message) {
-    // Show error toast instead of modal for consistency
-    showErrorToast(message);
-    
-    // Clear the current input field after showing error
-    setTimeout(() => {
-        // Check which field is currently active and clear it
-        const activeElement = document.activeElement;
-        if (activeElement && (activeElement.id === 'containerBarcode' || activeElement.id === 'boxBarcode')) {
-            activeElement.value = '';
-            activeElement.focus();
+    // Box barcode scanner
+    document.getElementById('boxBarcode').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            scanBox();
         }
-    }, 2000);
-}
+    });
 
+    // Auto-enter for box barcode (trigger scan automatically after barcode input)
+    document.getElementById('boxBarcode').addEventListener('input', function(e) {
+        const barcode = this.value;
+        // Auto-trigger scan if barcode contains '#' (indicates complete box barcode)
+        if (barcode.includes('#')) {
+            // Small delay to ensure barcode is completely scanned
+            setTimeout(() => {
+                if (this.value === barcode) { // Check if value hasn't changed (barcode complete)
+                    scanBox();
+                }
+            }, 100);
+        }
+    });
 
-function displayCaseInfo(caseData) {
-    // Show case info section
-    document.getElementById('caseInfo').classList.remove('hidden');
-    
-    // Fill case information
-    document.getElementById('destination').textContent = caseData.destination || '-';
-    document.getElementById('orderNo').textContent = caseData.order_no || '-';
-    document.getElementById('prodMonth').textContent = caseData.prod_month || '-';
-    document.getElementById('caseNo').textContent = caseData.case_no || '-';
-    document.getElementById('caseSize').textContent = caseData.case_size || '-';
-    document.getElementById('grossWeight').textContent = caseData.gross_weight ? caseData.gross_weight + ' KGS' : '-';
-    document.getElementById('netWeight').textContent = caseData.net_weight ? caseData.net_weight + ' KGS' : '-';
-}
+    // ESC key support for manual clearing
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            // Clear current active input field
+            const activeElement = document.activeElement;
+            if (activeElement && (activeElement.id === 'containerBarcode' || activeElement.id === 'boxBarcode')) {
+                activeElement.value = '';
+            }
+        }
+    });
 
-function updateProgressTables(data) {
-    // Fetch updated data from server
-    if (!currentCaseId) return;
-    
-    $.ajax({
-        url: `/api/casemark/get-case-progress/${currentCaseId}`,
-        method: 'GET',
-        success: function(response) {
-            if (response.success) {
-                const data = response.data;
-                
-                // Update scan progress table
-                const progressBody = document.querySelector('tbody');
-                if (progressBody) {
-                    const isComplete = data.scannedBoxes >= data.totalBoxes && data.totalBoxes > 0;
-                    progressBody.innerHTML = `
+    function scanContainer() {
+        const barcode = document.getElementById('containerBarcode').value;
+
+        if (!barcode) {
+            showErrorToast('Please enter container barcode');
+            return;
+        }
+
+        $.ajax({
+            url: '/api/casemark/scan-container',
+            method: 'POST',
+            data: {
+                barcode: barcode,
+                _token: $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(response) {
+                if (response.success) {
+                    currentCaseId = response.data.case.id;
+                    currentCaseData = response.data;
+
+                    // Show case information
+                    displayCaseInfo(response.data.case);
+
+                    // Show box scanner
+                    document.getElementById('boxScanner').classList.remove('hidden');
+
+                    // Update progress tables
+                    updateProgressTables(response.data);
+
+                    // Show success notification
+                    showSuccessToast('Container scanned successfully!', 'Please scan box barcodes now.');
+
+                    // Focus on box scanner
+                    setTimeout(() => {
+                        document.getElementById('boxBarcode').focus();
+                    }, 2000);
+
+                    // Clear container barcode input
+                    document.getElementById('containerBarcode').value = '';
+
+                } else {
+                    showErrorModal(response.message);
+                }
+            },
+            error: function(xhr) {
+                const response = xhr.responseJSON;
+                showErrorToast(response ? response.message : 'Error scanning container');
+
+                // Clear input field even when error occurs
+                setTimeout(() => {
+                    document.getElementById('containerBarcode').value = '';
+                    document.getElementById('containerBarcode').focus();
+                }, 3000); // Clear after 3 seconds to give user time to read error
+            }
+        });
+    }
+
+    function scanBox() {
+        const barcode = document.getElementById('boxBarcode').value;
+
+        if (!barcode) {
+            showErrorToast('Please enter box barcode');
+            return;
+        }
+
+        if (!currentCaseId) {
+            showErrorToast('Please scan container first');
+            return;
+        }
+
+        $.ajax({
+            url: '/api/casemark/scan-box',
+            method: 'POST',
+            data: {
+                barcode: barcode,
+                case_id: currentCaseId,
+                _token: $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(response) {
+                if (response.success) {
+                    // Update progress tables
+                    updateProgressTables(currentCaseData);
+
+                    // Show success notification
+                    showSuccessToast('Box scanned successfully!', 'Box sequence: ' + response.data.sequence);
+
+                    // Check if all items are scanned
+                    checkCompletion();
+
+                    // Focus back on box scanner
+                    setTimeout(() => {
+                        document.getElementById('boxBarcode').focus();
+                    }, 2000);
+
+                    // Clear box barcode input
+                    document.getElementById('boxBarcode').value = '';
+
+                } else {
+                    showErrorModal(response.message);
+                }
+            },
+            error: function(xhr) {
+                const response = xhr.responseJSON;
+                showErrorToast(response ? response.message : 'Error scanning box');
+
+                // Clear input field even when error occurs
+                setTimeout(() => {
+                    document.getElementById('boxBarcode').value = '';
+                    document.getElementById('boxBarcode').focus();
+                }, 3000); // Clear after 3 seconds to give user time to read error
+            }
+        });
+    }
+
+    function displayCaseInfo(caseData) {
+        // Show case info section
+        document.getElementById('caseInfo').classList.remove('hidden');
+
+        // Fill case information
+        document.getElementById('destination').textContent = caseData.destination || '-';
+        document.getElementById('orderNo').textContent = caseData.order_no || '-';
+        document.getElementById('prodMonth').textContent = caseData.prod_month || '-';
+        document.getElementById('caseNo').textContent = caseData.case_no || '-';
+        document.getElementById('caseSize').textContent = caseData.case_size || '-';
+        document.getElementById('grossWeight').textContent = caseData.gross_weight ? caseData.gross_weight + ' KGS' : '-';
+        document.getElementById('netWeight').textContent = caseData.net_weight ? caseData.net_weight + ' KGS' : '-';
+    }
+
+    function updateProgressTables(data) {
+        // Fetch updated data from server
+        if (!currentCaseId) return;
+
+        $.ajax({
+            url: `/api/casemark/get-case-progress/${currentCaseId}`,
+            method: 'GET',
+            success: function(response) {
+                if (response.success) {
+                    const data = response.data;
+
+                    // Update scan progress table
+                    const progressBody = document.querySelector('tbody');
+                    if (progressBody) {
+                        const isComplete = data.scannedBoxes >= data.totalBoxes && data.totalBoxes > 0;
+                        progressBody.innerHTML = `
                         <tr>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">1.</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${data.scanProgress.part_no}</td>
@@ -411,17 +405,17 @@ function updateProgressTables(data) {
                             </td>
                         </tr>
                     `;
-                }
-                
-                // Update details table
-                const detailsBody = document.querySelectorAll('tbody')[1];
-                if (detailsBody) {
-                    detailsBody.innerHTML = '';
-                    
-                    data.details.forEach((item, index) => {
-                        const row = document.createElement('tr');
-                        row.className = index % 2 === 0 ? 'bg-white' : 'bg-gray-50';
-                        row.innerHTML = `
+                    }
+
+                    // Update details table
+                    const detailsBody = document.querySelectorAll('tbody')[1];
+                    if (detailsBody) {
+                        detailsBody.innerHTML = '';
+
+                        data.details.forEach((item, index) => {
+                            const row = document.createElement('tr');
+                            row.className = index % 2 === 0 ? 'bg-white' : 'bg-gray-50';
+                            row.innerHTML = `
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${index + 1}.</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.box_no}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.part_no}</td>
@@ -433,117 +427,146 @@ function updateProgressTables(data) {
                                 </span>
                             </td>
                         `;
-                        detailsBody.appendChild(row);
-                    });
+                            detailsBody.appendChild(row);
+                        });
+                    }
+
+                    // Check completion and show submit button
+                    if (data.scannedBoxes >= data.totalBoxes && data.totalBoxes > 0) {
+                        showSubmitButton(data.totalBoxes);
+                    }
                 }
-                
-                // Check completion and show submit button
-                if (data.scannedBoxes >= data.totalBoxes && data.totalBoxes > 0) {
-                    showSubmitButton(data.totalBoxes);
+            },
+            error: function(xhr) {
+                console.error('Error updating progress:', xhr);
+            }
+        });
+    }
+
+    function showSubmitButton(totalExpected) {
+        const submitContainer = document.getElementById('submitContainer');
+        submitContainer.classList.remove('hidden');
+    }
+
+    function checkCompletion() {
+        if (!currentCaseId) return;
+
+        // Fetch latest progress from server
+        $.ajax({
+            url: `/api/casemark/get-case-progress/${currentCaseId}`,
+            method: 'GET',
+            success: function(response) {
+                if (response.success) {
+                    const data = response.data;
+                    if (data.scannedBoxes >= data.totalBoxes && data.totalBoxes > 0) {
+                        showSubmitButton(data.totalBoxes);
+                    }
+                }
+            },
+            error: function(xhr) {
+                console.error('Error checking completion:', xhr);
+            }
+        });
+    }
+
+    function submitCase() {
+        if (!currentCaseData) return;
+
+        $.ajax({
+            url: '/api/casemark/submit-case',
+            method: 'POST',
+            data: {
+                case_no: currentCaseData.case.case_no,
+                _token: $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(response) {
+                if (response.success) {
+                    showSuccessToast('Case submitted successfully!', 'Redirecting to case list...');
+                    setTimeout(() => {
+                        window.location.href = '{{ route("casemark.list") }}';
+                    }, 2000);
+                } else {
+                    showErrorModal(response.message);
+                }
+            },
+            error: function(xhr) {
+                const response = xhr.responseJSON;
+                showErrorToast(response ? response.message : 'Error submitting case');
+            }
+        });
+    }
+
+    // Handle error modal - show error toast instead and auto-clear input
+    function showErrorModal(message) {
+        showErrorToast(message, true);
+    }
+
+    function showSuccessToast(title, message, autoClearInput = false) {
+        document.getElementById('toastTitle').textContent = title;
+        document.getElementById('toastMessage').textContent = message;
+
+        const toast = document.getElementById('successToast');
+        toast.classList.remove('translate-x-full');
+        toast.classList.add('translate-x-0');
+
+        // Auto hide after 3 seconds
+        setTimeout(() => {
+            hideSuccessToast();
+
+            // Auto clear input if specified
+            if (autoClearInput) {
+                const activeElement = document.activeElement;
+                if (activeElement && (activeElement.id === 'containerBarcode' || activeElement.id === 'boxBarcode')) {
+                    activeElement.value = '';
                 }
             }
-        },
-        error: function(xhr) {
-            console.error('Error updating progress:', xhr);
-        }
-    });
-}
+        }, 3000);
+    }
 
-function showSubmitButton(totalExpected) {
-    const submitContainer = document.getElementById('submitContainer');
-    submitContainer.classList.remove('hidden');
-}
+    function hideSuccessToast() {
+        const toast = document.getElementById('successToast');
+        toast.classList.remove('translate-x-0');
+        toast.classList.add('translate-x-full');
+    }
 
-function checkCompletion() {
-    if (!currentCaseId) return;
-    
-    // Fetch latest progress from server
-    $.ajax({
-        url: `/api/casemark/get-case-progress/${currentCaseId}`,
-        method: 'GET',
-        success: function(response) {
-            if (response.success) {
-                const data = response.data;
-                if (data.scannedBoxes >= data.totalBoxes && data.totalBoxes > 0) {
-                    showSubmitButton(data.totalBoxes);
+    function showErrorToast(message, autoClearInput = true) {
+        document.getElementById('errorToastMessage').textContent = message;
+
+        const toast = document.getElementById('errorToast');
+        toast.classList.remove('translate-x-full');
+        toast.classList.add('translate-x-0');
+
+        // Auto hide after 3 seconds
+        setTimeout(() => {
+            hideErrorToast();
+
+            // Auto clear input and refocus after error
+            if (autoClearInput) {
+                const activeElement = document.activeElement;
+                if (activeElement && (activeElement.id === 'containerBarcode' || activeElement.id === 'boxBarcode')) {
+                    activeElement.value = '';
+                    activeElement.focus();
+                } else {
+                    // If no active element, focus on the appropriate field
+                    if (currentCaseId) {
+                        document.getElementById('boxBarcode').focus();
+                    } else {
+                        document.getElementById('containerBarcode').focus();
+                    }
                 }
             }
-        },
-        error: function(xhr) {
-            console.error('Error checking completion:', xhr);
-        }
+        }, 3000); // 3 seconds for better UX
+    }
+
+    function hideErrorToast() {
+        const toast = document.getElementById('errorToast');
+        toast.classList.remove('translate-x-0');
+        toast.classList.add('translate-x-full');
+    }
+
+    // Focus on container barcode input on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('containerBarcode').focus();
     });
-}
-
-function submitCase() {
-    if (!currentCaseData) return;
-    
-    $.ajax({
-        url: '/api/casemark/submit-case',
-        method: 'POST',
-        data: {
-            case_no: currentCaseData.case.case_no,
-            _token: $('meta[name="csrf-token"]').attr('content')
-        },
-        success: function(response) {
-            if (response.success) {
-                showSuccessToast('Case submitted successfully!', 'Redirecting to case list...');
-                setTimeout(() => {
-                    window.location.href = '{{ route("casemark.list") }}';
-                }, 2000);
-            } else {
-                showErrorModal(response.message);
-            }
-        },
-        error: function(xhr) {
-            const response = xhr.responseJSON;
-            showErrorToast(response ? response.message : 'Error submitting case');
-        }
-    });
-}
-
-function showSuccessToast(title, message) {
-    document.getElementById('toastTitle').textContent = title;
-    document.getElementById('toastMessage').textContent = message;
-    
-    const toast = document.getElementById('successToast');
-    toast.classList.remove('translate-x-full');
-    toast.classList.add('translate-x-0');
-    
-    // Auto hide after 3 seconds
-    setTimeout(() => {
-        hideSuccessToast();
-    }, 3000);
-}
-
-function hideSuccessToast() {
-    const toast = document.getElementById('successToast');
-    toast.classList.remove('translate-x-0');
-    toast.classList.add('translate-x-full');
-}
-
-function showErrorToast(message) {
-    document.getElementById('errorToastMessage').textContent = message;
-    
-    const toast = document.getElementById('errorToast');
-    toast.classList.remove('translate-x-full');
-    toast.classList.add('translate-x-0');
-    
-    // Auto hide after 4 seconds
-    setTimeout(() => {
-        hideErrorToast();
-    }, 4000);
-}
-
-function hideErrorToast() {
-    const toast = document.getElementById('errorToast');
-    toast.classList.remove('translate-x-0');
-    toast.classList.add('translate-x-full');
-}
-
-// Focus on container barcode input on page load
-document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('containerBarcode').focus();
-});
 </script>
 @endsection

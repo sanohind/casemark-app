@@ -113,15 +113,15 @@ class CaseMarkController extends Controller
             $row25 = array_map('trim', $data[$startRow + 6] ?? []); // Baris 25
 
             // Debug: Tampilkan isi baris untuk troubleshooting
-            \Log::info('Excel Data Debug', [
-                'row19' => $row19,
-                'row20' => $row20,
-                'row21' => $row21,
-                'row22' => $row22,
-                'row23' => $row23,
-                'row24' => $row24,
-                'row25' => $row25
-            ]);
+            // \Log::info('Excel Data Debug', [
+            //     'row19' => $row19,
+            //     'row20' => $row20,
+            //     'row21' => $row21,
+            //     'row22' => $row22,
+            //     'row23' => $row23,
+            //     'row24' => $row24,
+            //     'row25' => $row25
+            // ]);
 
             // Ekstrak data berdasarkan format Excel yang diberikan
             // Destination - tidak perlu clean numeric
@@ -273,19 +273,19 @@ class CaseMarkController extends Controller
             $contentStartRow = 25; // Baris 25 adalah data pertama setelah header
             
             // Debug: Log data dari baris 25-35 untuk melihat data yang sebenarnya
-            \Log::info('Content List Preview Debug - Rows 25-35:', [
-                'row25' => array_map('trim', $data[25] ?? []),
-                'row26' => array_map('trim', $data[26] ?? []),
-                'row27' => array_map('trim', $data[27] ?? []),
-                'row28' => array_map('trim', $data[28] ?? []),
-                'row29' => array_map('trim', $data[29] ?? []),
-                'row30' => array_map('trim', $data[30] ?? []),
-                'row31' => array_map('trim', $data[31] ?? []),
-                'row32' => array_map('trim', $data[32] ?? []),
-                'row33' => array_map('trim', $data[33] ?? []),
-                'row34' => array_map('trim', $data[34] ?? []),
-                'row35' => array_map('trim', $data[35] ?? [])
-            ]);
+            // \Log::info('Content List Preview Debug - Rows 25-35:', [
+            //     'row25' => array_map('trim', $data[25] ?? []),
+            //     'row26' => array_map('trim', $data[26] ?? []),
+            //     'row27' => array_map('trim', $data[27] ?? []),
+            //     'row28' => array_map('trim', $data[28] ?? []),
+            //     'row29' => array_map('trim', $data[29] ?? []),
+            //     'row30' => array_map('trim', $data[30] ?? []),
+            //     'row31' => array_map('trim', $data[31] ?? []),
+            //     'row32' => array_map('trim', $data[32] ?? []),
+            //     'row33' => array_map('trim', $data[33] ?? []),
+            //     'row34' => array_map('trim', $data[34] ?? []),
+            //     'row35' => array_map('trim', $data[35] ?? [])
+            // ]);
             
             for ($i = $contentStartRow; $i < count($data); $i++) {
                 $row = array_map('trim', $data[$i] ?? []);
