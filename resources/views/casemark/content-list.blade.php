@@ -168,30 +168,24 @@
     </div>
 </div>
 
-<!-- Success Notification Modal -->
-<div id="successModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
-    <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-        <div class="text-center">
-            <i class="fas fa-check-circle text-green-500 text-4xl mb-4"></i>
-            <h3 class="text-lg font-medium text-gray-900 mb-2" id="modalTitle">Success!</h3>
-            <p class="text-sm text-gray-600 mb-4" id="modalMessage">Operation completed successfully.</p>
-            <button onclick="closeSuccessModal()" class="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
-                OK
-            </button>
+<!-- Success Notification Toast -->
+<div id="successToast" class="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg transform translate-x-full transition-transform duration-300 z-50">
+    <div class="flex items-center">
+        <i class="fas fa-check-circle mr-3"></i>
+        <div>
+            <h4 class="font-semibold" id="toastTitle">Success!</h4>
+            <p class="text-sm opacity-90" id="toastMessage">Operation completed successfully.</p>
         </div>
     </div>
 </div>
 
-<!-- Error Notification Modal -->
-<div id="errorModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
-    <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-        <div class="text-center">
-            <i class="fas fa-exclamation-triangle text-red-500 text-4xl mb-4"></i>
-            <h3 class="text-lg font-medium text-gray-900 mb-2">Error!</h3>
-            <p class="text-sm text-gray-600 mb-4" id="errorMessage">An error occurred.</p>
-            <button onclick="closeErrorModal()" class="px-6 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
-                OK
-            </button>
+<!-- Error Notification Toast -->
+<div id="errorToast" class="fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg transform translate-x-full transition-transform duration-300 z-50">
+    <div class="flex items-center">
+        <i class="fas fa-exclamation-triangle mr-3"></i>
+        <div>
+            <h4 class="font-semibold">Error!</h4>
+            <p class="text-sm opacity-90" id="errorToastMessage">An error occurred.</p>
         </div>
     </div>
 </div>
@@ -248,7 +242,7 @@ function scanContainer() {
     const barcode = document.getElementById('containerBarcode').value;
     
     if (!barcode) {
-        showErrorModal('Please enter container barcode');
+        showErrorToast('Please enter container barcode');
         return;
     }
 
@@ -274,7 +268,7 @@ function scanContainer() {
                 updateProgressTables(response.data);
                 
                 // Show success notification
-                showSuccessModal('Container scanned successfully!', 'Please scan box barcodes now.');
+                showSuccessToast('Container scanned successfully!', 'Please scan box barcodes now.');
                 
                 // Focus on box scanner
                 setTimeout(() => {
@@ -290,7 +284,7 @@ function scanContainer() {
         },
         error: function(xhr) {
             const response = xhr.responseJSON;
-            showErrorModal(response ? response.message : 'Error scanning container');
+            showErrorToast(response ? response.message : 'Error scanning container');
         }
     });
 }
@@ -299,12 +293,12 @@ function scanBox() {
     const barcode = document.getElementById('boxBarcode').value;
     
     if (!barcode) {
-        showErrorModal('Please enter box barcode');
+        showErrorToast('Please enter box barcode');
         return;
     }
     
     if (!currentCaseId) {
-        showErrorModal('Please scan container first');
+        showErrorToast('Please scan container first');
         return;
     }
     
@@ -322,7 +316,7 @@ function scanBox() {
                 updateProgressTables(currentCaseData);
                 
                 // Show success notification
-                showSuccessModal('Box scanned successfully!', 'Box sequence: ' + response.data.sequence);
+                showSuccessToast('Box scanned successfully!', 'Box sequence: ' + response.data.sequence);
                 
                 // Check if all items are scanned
                 checkCompletion();
@@ -341,7 +335,7 @@ function scanBox() {
         },
         error: function(xhr) {
             const response = xhr.responseJSON;
-            showErrorModal(response ? response.message : 'Error scanning box');
+            showErrorToast(response ? response.message : 'Error scanning box');
         }
     });
 }
@@ -406,7 +400,7 @@ function updateProgressTables(data) {
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.quantity}</td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${item.is_scanned ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">
-                                    ${item.is_scanned ? 'Scanned' : 'Pending'}
+                                    ${item.is_scanned ? 'Scanned' : 'Not Scanned'}
                                 </span>
                             </td>
                         `;
@@ -464,7 +458,7 @@ function submitCase() {
         },
         success: function(response) {
             if (response.success) {
-                showSuccessModal('Case submitted successfully!', 'Redirecting to case list...');
+                showSuccessToast('Case submitted successfully!', 'Redirecting to case list...');
                 setTimeout(() => {
                     window.location.href = '{{ route("casemark.list") }}';
                 }, 2000);
@@ -474,42 +468,48 @@ function submitCase() {
         },
         error: function(xhr) {
             const response = xhr.responseJSON;
-            showErrorModal(response ? response.message : 'Error submitting case');
+            showErrorToast(response ? response.message : 'Error submitting case');
         }
     });
 }
 
-function showSuccessModal(title, message) {
-    document.getElementById('modalTitle').textContent = title;
-    document.getElementById('modalMessage').textContent = message;
-    document.getElementById('successModal').classList.remove('hidden');
-    document.getElementById('successModal').classList.add('flex');
+function showSuccessToast(title, message) {
+    document.getElementById('toastTitle').textContent = title;
+    document.getElementById('toastMessage').textContent = message;
     
-    // Auto hide after 2 seconds
-    setTimeout(() => {
-        closeSuccessModal();
-    }, 2000);
-}
-
-function closeSuccessModal() {
-    document.getElementById('successModal').classList.add('hidden');
-    document.getElementById('successModal').classList.remove('flex');
-}
-
-function showErrorModal(message) {
-    document.getElementById('errorMessage').textContent = message;
-    document.getElementById('errorModal').classList.remove('hidden');
-    document.getElementById('errorModal').classList.add('flex');
+    const toast = document.getElementById('successToast');
+    toast.classList.remove('translate-x-full');
+    toast.classList.add('translate-x-0');
     
     // Auto hide after 3 seconds
     setTimeout(() => {
-        closeErrorModal();
+        hideSuccessToast();
     }, 3000);
 }
 
-function closeErrorModal() {
-    document.getElementById('errorModal').classList.add('hidden');
-    document.getElementById('errorModal').classList.remove('flex');
+function hideSuccessToast() {
+    const toast = document.getElementById('successToast');
+    toast.classList.remove('translate-x-0');
+    toast.classList.add('translate-x-full');
+}
+
+function showErrorToast(message) {
+    document.getElementById('errorToastMessage').textContent = message;
+    
+    const toast = document.getElementById('errorToast');
+    toast.classList.remove('translate-x-full');
+    toast.classList.add('translate-x-0');
+    
+    // Auto hide after 4 seconds
+    setTimeout(() => {
+        hideErrorToast();
+    }, 4000);
+}
+
+function hideErrorToast() {
+    const toast = document.getElementById('errorToast');
+    toast.classList.remove('translate-x-0');
+    toast.classList.add('translate-x-full');
 }
 
 // Focus on container barcode input on page load

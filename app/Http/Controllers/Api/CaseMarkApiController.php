@@ -708,6 +708,14 @@ class CaseMarkApiController extends Controller
                 $caseNo = $possibleCaseNumbers[0] ?? substr($barcode, 0, 12);
             }
             
+            // Check if case is already packed
+            if ($case && $case->status === 'packed') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Case ' . $caseNo . ' has already been packed and cannot be scanned again'
+                ], 400);
+            }
+            
             // Debug log
             Log::info('Container scan - Original barcode: ' . $barcode);
             Log::info('Container scan - Barcode length: ' . strlen($barcode));
@@ -957,22 +965,25 @@ class CaseMarkApiController extends Controller
             $scanProgress = [
                 'part_no' => $contentLists->first()->part_no ?? 'N/A',
                 'part_name' => $contentLists->first()->part_name ?? 'N/A',
-                'quantity' => $totalExpected,
+                'quantity' => $contentLists->first()->quantity ?? 0, // Quantity per box
                 'progress' => $progress
             ];
             
             // Prepare details data
             $details = $contentLists->map(function($content) use ($scanHistory) {
-                $isScanned = $scanHistory->where('box_no', $content->box_no)
+                // Check if this box has been scanned by looking at scan_history
+                $scannedBox = $scanHistory->where('box_no', $content->box_no)
                     ->where('part_no', $content->part_no)
-                    ->count() > 0;
+                    ->first();
+                
+                $isScanned = $scannedBox ? true : false;
                 
                 return [
                     'box_no' => $content->box_no,
                     'part_no' => $content->part_no,
                     'part_name' => $content->part_name,
                     'quantity' => $content->quantity,
-                    'is_scanned' => $isScanned
+                    'status' => $isScanned
                 ];
             });
             

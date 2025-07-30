@@ -35,6 +35,6 @@ class ContentList extends Model
 
     public function getStatusAttribute()
     {
-        return $this->isScanned() ? 'Scanned' : 'Pending';
+        return $this->isScanned() ? 'Scanned' : 'Not Scanned';
     }
 }
