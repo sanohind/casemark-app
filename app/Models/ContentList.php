@@ -27,10 +27,20 @@ class ContentList extends Model
 
     public function isScanned()
     {
-        return ScanHistory::where('case_id', $this->case_id)
-                         ->where('box_no', $this->box_no)
-                         ->where('part_no', $this->part_no)
-                         ->exists();
+        // PERBAIKAN: Cari berdasarkan box_no saja terlebih dahulu
+        $scanned = ScanHistory::where('case_id', $this->case_id)
+                             ->where('box_no', $this->box_no)
+                             ->exists();
+        
+        // Jika tidak ditemukan, coba cari berdasarkan kombinasi box_no dan part_no
+        if (!$scanned) {
+            $scanned = ScanHistory::where('case_id', $this->case_id)
+                                 ->where('box_no', $this->box_no)
+                                 ->where('part_no', $this->part_no)
+                                 ->exists();
+        }
+        
+        return $scanned;
     }
 
     public function getStatusAttribute()

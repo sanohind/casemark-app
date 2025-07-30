@@ -285,6 +285,12 @@ function scanContainer() {
         error: function(xhr) {
             const response = xhr.responseJSON;
             showErrorToast(response ? response.message : 'Error scanning container');
+            
+            // PERBAIKAN: Clear input field even when error occurs
+            setTimeout(() => {
+                document.getElementById('containerBarcode').value = '';
+                document.getElementById('containerBarcode').focus();
+            }, 2000); // Clear after 2 seconds to give user time to read error
         }
     });
 }
@@ -336,9 +342,32 @@ function scanBox() {
         error: function(xhr) {
             const response = xhr.responseJSON;
             showErrorToast(response ? response.message : 'Error scanning box');
+            
+            // PERBAIKAN: Clear input field even when error occurs
+            setTimeout(() => {
+                document.getElementById('boxBarcode').value = '';
+                document.getElementById('boxBarcode').focus();
+            }, 2000); // Clear after 2 seconds to give user time to read error
         }
     });
 }
+
+// PERBAIKAN: Tambahkan fungsi untuk handle error modal
+function showErrorModal(message) {
+    // Show error toast instead of modal for consistency
+    showErrorToast(message);
+    
+    // Clear the current input field after showing error
+    setTimeout(() => {
+        // Check which field is currently active and clear it
+        const activeElement = document.activeElement;
+        if (activeElement && (activeElement.id === 'containerBarcode' || activeElement.id === 'boxBarcode')) {
+            activeElement.value = '';
+            activeElement.focus();
+        }
+    }, 2000);
+}
+
 
 function displayCaseInfo(caseData) {
     // Show case info section

@@ -21,22 +21,22 @@ class CaseMarkApiController extends Controller
 
         try {
             $case = CaseModel::where('case_no', $request->case_no)->firstOrFail();
-            
+
             // Parse QR code to extract box info
             $boxData = $this->parseBoxQR($request->box_qr);
-            
+
             if (!$boxData['box_no'] || !$boxData['part_no']) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Invalid QR code format. Expected format: BOX_01|32909-BZ100-00-87'
                 ]);
             }
-            
+
             // Find matching content list
             $contentList = ContentList::where('case_id', $case->id)
-                                    ->where('box_no', $boxData['box_no'])
-                                    ->where('part_no', $boxData['part_no'])
-                                    ->first();
+                ->where('box_no', $boxData['box_no'])
+                ->where('part_no', $boxData['part_no'])
+                ->first();
 
             if (!$contentList) {
                 return response()->json([
@@ -47,9 +47,9 @@ class CaseMarkApiController extends Controller
 
             // Check if already scanned
             $existingScan = ScanHistory::where('case_id', $case->id)
-                                     ->where('box_no', $boxData['box_no'])
-                                     ->where('part_no', $boxData['part_no'])
-                                     ->first();
+                ->where('box_no', $boxData['box_no'])
+                ->where('part_no', $boxData['part_no'])
+                ->first();
 
             if ($existingScan) {
                 return response()->json([
@@ -80,7 +80,6 @@ class CaseMarkApiController extends Controller
                     'scan_time' => $scanRecord->scanned_at->format('d/m/Y H:i:s')
                 ]
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -97,26 +96,26 @@ class CaseMarkApiController extends Controller
 
         try {
             $case = CaseModel::where('case_no', $request->case_no)->firstOrFail();
-            
+
             // Check if there are scanned items
             $scannedCount = ScanHistory::where('case_id', $case->id)
-                                     ->where('status', 'scanned')
-                                     ->count();
-            
+                ->where('status', 'scanned')
+                ->count();
+
             if ($scannedCount === 0) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Tidak ada box yang discan untuk case ini'
                 ]);
             }
-            
+
             // Update all scanned items to packed
             ScanHistory::where('case_id', $case->id)
-                      ->where('status', 'scanned')
-                      ->update([
-                          'status' => 'packed',
-                          'packing_date' => Carbon::now()
-                      ]);
+                ->where('status', 'scanned')
+                ->update([
+                    'status' => 'packed',
+                    'packing_date' => Carbon::now()
+                ]);
 
             // Update case status
             $case->update(['status' => 'packed']);
@@ -130,7 +129,6 @@ class CaseMarkApiController extends Controller
                     'packing_date' => Carbon::now()->format('d/m/Y H:i:s')
                 ]
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -143,12 +141,12 @@ class CaseMarkApiController extends Controller
     {
         try {
             $case = CaseModel::with(['contentLists', 'scanHistory'])->where('case_no', $caseNo)->firstOrFail();
-            
+
             $totalBoxes = $case->contentLists()->count();
             $scannedBoxes = $case->scanHistory()->distinct('box_no')->count();
             $totalQuantity = $case->contentLists()->sum('quantity');
             $scannedQuantity = $case->scanHistory()->sum('scanned_qty');
-            
+
             return response()->json([
                 'success' => true,
                 'data' => [
@@ -183,24 +181,24 @@ class CaseMarkApiController extends Controller
             $activeCases = CaseModel::where('status', 'active')->count();
             $packedCases = CaseModel::where('status', 'packed')->count();
             $shippedCases = CaseModel::where('status', 'shipped')->count();
-            
+
             $totalScans = ScanHistory::count();
             $todayScans = ScanHistory::whereDate('scanned_at', Carbon::today())->count();
-            
+
             $recentActivity = ScanHistory::with('case')
-                                       ->latest('scanned_at')
-                                       ->take(10)
-                                       ->get()
-                                       ->map(function ($scan) {
-                                           return [
-                                               'case_no' => $scan->case->case_no,
-                                               'box_no' => $scan->box_no,
-                                               'part_no' => $scan->part_no,
-                                               'scanned_at' => $scan->scanned_at->format('d/m/Y H:i'),
-                                               'scanned_by' => $scan->scanned_by
-                                           ];
-                                       });
-            
+                ->latest('scanned_at')
+                ->take(10)
+                ->get()
+                ->map(function ($scan) {
+                    return [
+                        'case_no' => $scan->case->case_no,
+                        'box_no' => $scan->box_no,
+                        'part_no' => $scan->part_no,
+                        'scanned_at' => $scan->scanned_at->format('d/m/Y H:i'),
+                        'scanned_by' => $scan->scanned_by
+                    ];
+                });
+
             return response()->json([
                 'success' => true,
                 'data' => [
@@ -230,23 +228,23 @@ class CaseMarkApiController extends Controller
         try {
             $case = CaseModel::where('case_no', $caseNo)->firstOrFail();
             $containerInfo = $this->getContainerInfo($caseNo);
-            
+
             $scanHistory = ScanHistory::where('case_id', $case->id)
-                                    ->with('case')
-                                    ->orderBy('scanned_at', 'desc')
-                                    ->get()
-                                    ->map(function ($scan) {
-                                        return [
-                                            'box_no' => $scan->box_no,
-                                            'part_no' => $scan->part_no,
-                                            'quantity' => $scan->scanned_qty,
-                                            'status' => $scan->status,
-                                            'scanned_at' => $scan->scanned_at->format('d/m/Y H:i:s'),
-                                            'scanned_by' => $scan->scanned_by,
-                                            'packing_date' => $scan->packing_date ? $scan->packing_date->format('d/m/Y H:i:s') : null
-                                        ];
-                                    });
-            
+                ->with('case')
+                ->orderBy('scanned_at', 'desc')
+                ->get()
+                ->map(function ($scan) {
+                    return [
+                        'box_no' => $scan->box_no,
+                        'part_no' => $scan->part_no,
+                        'quantity' => $scan->scanned_qty,
+                        'status' => $scan->status,
+                        'scanned_at' => $scan->scanned_at->format('d/m/Y H:i:s'),
+                        'scanned_by' => $scan->scanned_by,
+                        'packing_date' => $scan->packing_date ? $scan->packing_date->format('d/m/Y H:i:s') : null
+                    ];
+                });
+
             return response()->json([
                 'success' => true,
                 'data' => [
@@ -266,38 +264,38 @@ class CaseMarkApiController extends Controller
     {
         $query = $request->get('q', '');
         $type = $request->get('type', 'all'); // all, cases, parts, boxes
-        
+
         $results = [];
-        
+
         if ($type === 'all' || $type === 'cases') {
             $cases = CaseModel::where('case_no', 'LIKE', "%{$query}%")
-                            ->orWhere('destination', 'LIKE', "%{$query}%")
-                            ->orWhere('prod_month', 'LIKE', "%{$query}%")
-                            ->take(10)
-                            ->get(['case_no', 'destination', 'prod_month', 'status']);
-            
+                ->orWhere('destination', 'LIKE', "%{$query}%")
+                ->orWhere('prod_month', 'LIKE', "%{$query}%")
+                ->take(10)
+                ->get(['case_no', 'destination', 'prod_month', 'status']);
+
             $results['cases'] = $cases;
         }
-        
+
         if ($type === 'all' || $type === 'parts') {
             $parts = ContentList::where('part_no', 'LIKE', "%{$query}%")
-                              ->orWhere('part_name', 'LIKE', "%{$query}%")
-                              ->with('case:id,case_no')
-                              ->take(10)
-                              ->get(['part_no', 'part_name', 'case_id']);
-            
+                ->orWhere('part_name', 'LIKE', "%{$query}%")
+                ->with('case:id,case_no')
+                ->take(10)
+                ->get(['part_no', 'part_name', 'case_id']);
+
             $results['parts'] = $parts;
         }
-        
+
         if ($type === 'all' || $type === 'boxes') {
             $boxes = ScanHistory::where('box_no', 'LIKE', "%{$query}%")
-                               ->with('case:id,case_no')
-                               ->take(10)
-                               ->get(['box_no', 'part_no', 'case_id', 'status', 'scanned_at']);
-            
+                ->with('case:id,case_no')
+                ->take(10)
+                ->get(['box_no', 'part_no', 'case_id', 'status', 'scanned_at']);
+
             $results['boxes'] = $boxes;
         }
-        
+
         return response()->json([
             'success' => true,
             'data' => $results
@@ -314,7 +312,7 @@ class CaseMarkApiController extends Controller
 
             // Mulai dari baris 19 (index 18) sesuai dengan format Excel yang diberikan
             $startRow = 18; // Baris 19 dalam Excel (0-based index)
-            
+
             if (count($data) <= $startRow) {
                 throw new \Exception('File Excel tidak memiliki cukup baris data');
             }
@@ -328,7 +326,7 @@ class CaseMarkApiController extends Controller
                             // Jika valueColumnIndex tidak ditentukan, ambil dari kolom berikutnya
                             $targetIndex = $valueColumnIndex !== null ? $valueColumnIndex : ($i + 1);
                             $value = trim((string)($row[$targetIndex] ?? ''));
-                            
+
                             // Jika cleanNumeric true, bersihkan nilai dari unit seperti "KGS", "KG", dll
                             if ($cleanNumeric) {
                                 return preg_replace('/[^0-9.]/', '', $value);
@@ -520,7 +518,7 @@ class CaseMarkApiController extends Controller
             // Parse content list data (baris 25 ke bawah)
             $contentListData = [];
             $contentStartRow = 25; // Baris 25 adalah data pertama setelah header
-            
+
             // Debug: Log data dari baris 25-35 untuk melihat data yang sebenarnya
             \Log::info('Content List Preview Debug - Rows 25-35:', [
                 'row25' => array_map('trim', $data[25] ?? []),
@@ -535,15 +533,15 @@ class CaseMarkApiController extends Controller
                 'row34' => array_map('trim', $data[34] ?? []),
                 'row35' => array_map('trim', $data[35] ?? [])
             ]);
-            
+
             for ($i = $contentStartRow; $i < count($data); $i++) {
                 $row = array_map('trim', $data[$i] ?? []);
-                
+
                 // Skip baris kosong
                 if (empty(array_filter($row))) {
                     continue;
                 }
-                
+
                 // Parse data content list berdasarkan format yang sebenarnya
                 $no = trim((string)($row[0] ?? '')); // Kolom 0 - NO.
                 $boxNo = trim((string)($row[1] ?? '')); // Kolom 1 - BOX NO.
@@ -551,13 +549,13 @@ class CaseMarkApiController extends Controller
                 $partName = trim((string)($row[4] ?? '')); // Kolom 4 - PART NAME (bukan 3)
                 $quantity = trim((string)($row[8] ?? '0')); // Kolom 8 - QTY (bukan 4)
                 $remark = trim((string)($row[5] ?? '')); // Kolom 5 - REMARK
-                
+
                 // Jika part_no kosong, gunakan part_name sebagai part_no
                 if (empty($partNo) && !empty($partName)) {
                     $partNo = $partName;
                     $partName = ''; // Kosongkan part_name karena sudah dipindah ke part_no
                 }
-                
+
                 // Validasi data yang diperlukan - hanya box_no yang wajib
                 if (!empty($boxNo)) {
                     $contentListData[] = [
@@ -627,24 +625,24 @@ class CaseMarkApiController extends Controller
         // Format 1: BOX_01|32909-BZ100-00-87
         // Format 2: BOX_01:32909-BZ100-00-87
         // Format 3: Just box number (will need manual part selection)
-        
+
         $separators = ['|', ':', '-', '_'];
         $parts = [];
-        
+
         foreach ($separators as $separator) {
             if (strpos($qrCode, $separator) !== false) {
                 $parts = explode($separator, $qrCode, 2);
                 break;
             }
         }
-        
+
         if (count($parts) >= 2) {
             return [
                 'box_no' => trim($parts[0]),
                 'part_no' => trim($parts[1])
             ];
         }
-        
+
         // If no separator found, assume it's just a box number
         return [
             'box_no' => trim($qrCode),
@@ -659,7 +657,7 @@ class CaseMarkApiController extends Controller
     {
         try {
             $barcode = $request->input('barcode');
-            
+
             if (!$barcode) {
                 return response()->json([
                     'success' => false,
@@ -670,31 +668,31 @@ class CaseMarkApiController extends Controller
             // Clean barcode from any control characters
             $barcode = trim($barcode);
             $barcode = preg_replace('/[\x00-\x1F\x7F]/', '', $barcode); // Remove control characters
-            
+
             // Try multiple extraction methods
             $possibleCaseNumbers = [];
-            
+
             // Method 1: Extract using regex pattern I2A-SAN-XXXXX
             if (preg_match('/^([A-Z0-9-]{11,13})/', $barcode, $matches)) {
                 $possibleCaseNumbers[] = $matches[1];
             }
-            
+
             // Method 2: Extract first 12 characters
             $possibleCaseNumbers[] = substr($barcode, 0, 12);
-            
+
             // Method 3: Extract first 11 characters (in case scanner sends shorter)
             $possibleCaseNumbers[] = substr($barcode, 0, 11);
-            
+
             // Method 4: Extract first 13 characters
             $possibleCaseNumbers[] = substr($barcode, 0, 13);
-            
+
             // Remove duplicates and empty values
             $possibleCaseNumbers = array_unique(array_filter($possibleCaseNumbers));
-            
+
             // Try to find case with any of the possible case numbers
             $case = null;
             $caseNo = null;
-            
+
             foreach ($possibleCaseNumbers as $possibleCaseNo) {
                 $case = CaseModel::where('case_no', $possibleCaseNo)->first();
                 if ($case) {
@@ -702,12 +700,12 @@ class CaseMarkApiController extends Controller
                     break;
                 }
             }
-            
+
             // If no case found, use the first possible case number for error message
             if (!$case) {
                 $caseNo = $possibleCaseNumbers[0] ?? substr($barcode, 0, 12);
             }
-            
+
             // Check if case is already packed
             if ($case && $case->status === 'packed') {
                 return response()->json([
@@ -715,7 +713,7 @@ class CaseMarkApiController extends Controller
                     'message' => 'Case ' . $caseNo . ' has already been packed and cannot be scanned again'
                 ], 400);
             }
-            
+
             // Debug log
             Log::info('Container scan - Original barcode: ' . $barcode);
             Log::info('Container scan - Barcode length: ' . strlen($barcode));
@@ -723,16 +721,16 @@ class CaseMarkApiController extends Controller
             Log::info('Container scan - Possible case numbers: ' . implode(', ', $possibleCaseNumbers));
             Log::info('Container scan - Selected case number: ' . $caseNo);
             Log::info('Container scan - Case found: ' . ($case ? 'YES' : 'NO'));
-            
+
             if (!$case) {
                 // Get all cases for debugging
                 $allCases = CaseModel::all(['case_no']);
                 $caseNumbers = $allCases->pluck('case_no')->toArray();
-                
+
                 Log::info('Container scan - All cases in database: ' . implode(', ', $caseNumbers));
                 Log::info('Container scan - Searched case number: ' . $caseNo);
                 Log::info('Container scan - Case number length: ' . strlen($caseNo));
-                
+
                 return response()->json([
                     'success' => false,
                     'message' => 'Case not found: ' . $caseNo . ' (Available: ' . implode(', ', $caseNumbers) . ')'
@@ -741,7 +739,7 @@ class CaseMarkApiController extends Controller
 
             // Get content lists for this case
             $contentLists = ContentList::where('case_id', $case->id)->get();
-            
+
             // Get scan history for this case
             $scanHistory = ScanHistory::where('case_id', $case->id)->get();
 
@@ -754,7 +752,6 @@ class CaseMarkApiController extends Controller
                     'scan_history' => $scanHistory
                 ]
             ]);
-
         } catch (\Exception $e) {
             Log::error('Container scan error: ' . $e->getMessage());
             return response()->json([
@@ -772,7 +769,7 @@ class CaseMarkApiController extends Controller
         try {
             $barcode = $request->input('barcode');
             $caseId = $request->input('case_id');
-            
+
             if (!$barcode || !$caseId) {
                 return response()->json([
                     'success' => false,
@@ -783,10 +780,10 @@ class CaseMarkApiController extends Controller
             // Clean barcode from any control characters
             $barcode = trim($barcode);
             $barcode = preg_replace('/[\x00-\x1F\x7F]/', '', $barcode); // Remove control characters
-            
+
             // Parse box barcode: I2A-SAN-00432-SA#23901-BZ140-00-87#00020#001-060#0#20250615#0#1B
             $parts = explode('#', $barcode);
-            
+
             if (count($parts) < 4) {
                 return response()->json([
                     'success' => false,
@@ -796,24 +793,24 @@ class CaseMarkApiController extends Controller
 
             // Extract case number using same method as container scan
             $possibleCaseNumbers = [];
-            
+
             // Method 1: Extract using regex pattern I2A-SAN-XXXXX
             if (preg_match('/^([A-Z0-9-]{11,13})/', $parts[0], $matches)) {
                 $possibleCaseNumbers[] = $matches[1];
             }
-            
+
             // Method 2: Extract first 12 characters
             $possibleCaseNumbers[] = substr($parts[0], 0, 12);
-            
+
             // Method 3: Extract first 11 characters
             $possibleCaseNumbers[] = substr($parts[0], 0, 11);
-            
+
             // Method 4: Extract first 13 characters
             $possibleCaseNumbers[] = substr($parts[0], 0, 13);
-            
+
             // Remove duplicates and empty values
             $possibleCaseNumbers = array_unique(array_filter($possibleCaseNumbers));
-            
+
             // Try to find case with any of the possible case numbers
             $boxCaseNo = null;
             foreach ($possibleCaseNumbers as $possibleCaseNo) {
@@ -823,18 +820,18 @@ class CaseMarkApiController extends Controller
                     break;
                 }
             }
-            
+
             // If no case found, use the first possible case number for error message
             if (!$boxCaseNo) {
                 $boxCaseNo = $possibleCaseNumbers[0] ?? substr($parts[0], 0, 12);
             }
-            
+
             // Debug logging
             Log::info('Box scan - Original barcode: ' . $barcode);
             Log::info('Box scan - Parts: ' . implode(' | ', $parts));
             Log::info('Box scan - Possible case numbers: ' . implode(', ', $possibleCaseNumbers));
             Log::info('Box scan - Selected case number: ' . $boxCaseNo);
-            
+
             $partNo = $parts[1]; // 23901-BZ140-00-87
             $quantity = (int) $parts[2]; // 00020
             $sequence = substr($parts[3], 0, 3); // 001 from 001-060
@@ -845,7 +842,7 @@ class CaseMarkApiController extends Controller
             Log::info('Box scan - Container case number: ' . ($case ? $case->case_no : 'NOT FOUND'));
             Log::info('Box scan - Box case number: ' . $boxCaseNo);
             Log::info('Box scan - Case numbers match: ' . ($case && $case->case_no === $boxCaseNo ? 'YES' : 'NO'));
-            
+
             if (!$case || $case->case_no !== $boxCaseNo) {
                 return response()->json([
                     'success' => false,
@@ -868,10 +865,14 @@ class CaseMarkApiController extends Controller
             // Calculate total quantity
             $totalQty = $quantity * (int) $totalSequence;
 
+            // PERBAIKAN: Konversi sequence ke integer dulu, lalu pad dengan 2 digit
+            $sequenceInt = (int) $sequence; // Konversi "002" menjadi 2
+            $boxNo = 'BOX_' . str_pad($sequenceInt, 2, '0', STR_PAD_LEFT); // Pad dengan 2 digit: "BOX_02"
+
             // Create scan history record
             $scanHistory = ScanHistory::create([
                 'case_id' => $caseId,
-                'box_no' => 'BOX_' . str_pad($sequence, 3, '0', STR_PAD_LEFT),
+                'box_no' => $boxNo, // Menggunakan variable yang sudah diperbaiki
                 'part_no' => $partNo,
                 'scanned_qty' => $quantity,
                 'total_qty' => $totalQty,
@@ -887,10 +888,10 @@ class CaseMarkApiController extends Controller
                     'scan_history' => $scanHistory,
                     'sequence' => $sequence,
                     'quantity' => $quantity,
-                    'total_qty' => $totalQty
+                    'total_qty' => $totalQty,
+                    'box_no' => $boxNo // Untuk debugging
                 ]
             ]);
-
         } catch (\Exception $e) {
             Log::error('Box scan error: ' . $e->getMessage());
             return response()->json([
@@ -907,7 +908,7 @@ class CaseMarkApiController extends Controller
     {
         try {
             $caseNo = $request->input('case_no');
-            
+
             if (!$caseNo) {
                 return response()->json([
                     'success' => false,
@@ -916,7 +917,7 @@ class CaseMarkApiController extends Controller
             }
 
             $case = CaseModel::where('case_no', $caseNo)->first();
-            
+
             if (!$case) {
                 return response()->json([
                     'success' => false,
@@ -931,7 +932,6 @@ class CaseMarkApiController extends Controller
                 'success' => true,
                 'message' => 'Case submitted successfully'
             ]);
-
         } catch (\Exception $e) {
             Log::error('Case submit error: ' . $e->getMessage());
             return response()->json([
@@ -945,22 +945,22 @@ class CaseMarkApiController extends Controller
     {
         try {
             $case = CaseModel::find($caseId);
-            
+
             if (!$case) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Case not found'
                 ], 404);
             }
-            
+
             $contentLists = ContentList::where('case_id', $case->id)->get();
             $scanHistory = ScanHistory::where('case_id', $case->id)->get();
-            
+
             // Calculate progress
             $totalScanned = $scanHistory->sum('scanned_qty');
             $totalExpected = $contentLists->sum('quantity');
             $progress = $totalExpected > 0 ? $totalScanned . '/' . $totalExpected : '0/0';
-            
+
             // Prepare scan progress data
             $scanProgress = [
                 'part_no' => $contentLists->first()->part_no ?? 'N/A',
@@ -968,36 +968,42 @@ class CaseMarkApiController extends Controller
                 'quantity' => $contentLists->first()->quantity ?? 0, // Quantity per box
                 'progress' => $progress
             ];
-            
-            // Prepare details data
-            $details = $contentLists->map(function($content) use ($scanHistory) {
-                // Check if this box has been scanned by looking at scan_history
-                $scannedBox = $scanHistory->where('box_no', $content->box_no)
-                    ->where('part_no', $content->part_no)
-                    ->first();
-                
+
+            // Prepare details data - PERBAIKAN: Gunakan logika yang benar untuk menentukan status
+            $details = $contentLists->map(function ($content) use ($scanHistory) {
+                // PERBAIKAN: Cari berdasarkan box_no saja karena dari scan box, 
+                // box_no dibuat dari sequence dan part_no dari barcode mungkin berbeda format
+                $scannedBox = $scanHistory->where('box_no', $content->box_no)->first();
+
+                // Jika tidak ditemukan berdasarkan box_no, coba cari berdasarkan kombinasi box_no dan part_no
+                if (!$scannedBox) {
+                    $scannedBox = $scanHistory->where('box_no', $content->box_no)
+                        ->where('part_no', $content->part_no)
+                        ->first();
+                }
+
                 $isScanned = $scannedBox ? true : false;
-                
+
                 return [
                     'box_no' => $content->box_no,
                     'part_no' => $content->part_no,
                     'part_name' => $content->part_name,
                     'quantity' => $content->quantity,
-                    'status' => $isScanned
+                    'status' => $isScanned, // Gunakan boolean
+                    'is_scanned' => $isScanned // Tambahkan property ini untuk konsistensi dengan blade
                 ];
             });
-            
+
             return response()->json([
                 'success' => true,
                 'data' => [
                     'progress' => $progress,
                     'scanProgress' => $scanProgress,
                     'details' => $details,
-                    'scannedBoxes' => $scanHistory->count(),
+                    'scannedBoxes' => $scanHistory->count(), // Hitung berdasarkan jumlah record scan_history
                     'totalBoxes' => $contentLists->count()
                 ]
             ]);
-            
         } catch (\Exception $e) {
             Log::error('Get case progress error: ' . $e->getMessage());
             return response()->json([
@@ -1006,4 +1012,4 @@ class CaseMarkApiController extends Controller
             ], 500);
         }
     }
-} 
+}
