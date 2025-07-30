@@ -88,6 +88,8 @@
                             UPLOAD
                         </a>
 
+
+
                         <a href="{{ route('casemark.list') }}"
                             class="flex items-center px-4 py-2 text-sm font-medium rounded-md
                                   {{ request()->routeIs('casemark.list') ? 'bg-blue-900 text-white' : 'text-gray-700 hover:bg-gray-50' }}">
@@ -97,22 +99,7 @@
                     </nav>
                 </div>
 
-                <!-- Scan Actions -->
-                <div class="mt-6 bg-white rounded-lg shadow p-4">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Scan Operations</h3>
-                    <div class="space-y-2">
-                        <a href="{{ route('casemark.scan.container') }}"
-                            class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md text-sm font-medium flex items-center justify-center">
-                            <i class="fas fa-qrcode mr-2"></i>
-                            Scan Container
-                        </a>
-                        <a href="{{ route('casemark.scan.box') }}"
-                            class="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-md text-sm font-medium flex items-center justify-center">
-                            <i class="fas fa-box mr-2"></i>
-                            Scan Box
-                        </a>
-                    </div>
-                </div>
+
             </div>
 
             <!-- Main Content Area -->

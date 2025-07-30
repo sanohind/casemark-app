@@ -27,9 +27,7 @@ Route::prefix('casemark')->name('casemark.')->group(function () {
     // List Case Mark
     Route::get('/list', [CaseMarkController::class, 'listCaseMark'])->name('list');
     
-    // Scan Operations
-    Route::get('/scan-container', [CaseMarkController::class, 'scanContainer'])->name('scan.container');
-    Route::get('/scan-box', [CaseMarkController::class, 'scanBox'])->name('scan.box');
+
     Route::post('/scan', [CaseMarkController::class, 'processScan'])->name('scan.process');
     Route::post('/mark-packed', [CaseMarkController::class, 'markAsPacked'])->name('mark.packed');
     

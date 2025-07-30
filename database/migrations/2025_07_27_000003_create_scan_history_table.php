@@ -12,8 +12,8 @@ return new class extends Migration {
             $table->string('part_no', 50);
             $table->integer('scanned_qty');
             $table->integer('total_qty');
+            $table->string('seq', 10); // Sequence number from barcode
             $table->enum('status', ['scanned', 'packed'])->default('scanned');
-            $table->dateTime('packing_date')->nullable();
             $table->timestamp('scanned_at')->useCurrent();
             $table->string('scanned_by', 100)->nullable();
             $table->foreign('case_id')->references('id')->on('cases')->onDelete('cascade');

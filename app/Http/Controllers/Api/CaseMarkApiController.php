@@ -7,7 +7,8 @@ use App\Models\CaseModel;
 use App\Models\ContentList;
 use App\Models\ScanHistory;
 use Illuminate\Http\Request;
-use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class CaseMarkApiController extends Controller
 {
@@ -649,5 +650,349 @@ class CaseMarkApiController extends Controller
             'box_no' => trim($qrCode),
             'part_no' => '' // Will need to be determined from content list
         ];
+    }
+
+    /**
+     * Scan container barcode and return case information
+     */
+    public function scanContainer(Request $request)
+    {
+        try {
+            $barcode = $request->input('barcode');
+            
+            if (!$barcode) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Barcode is required'
+                ], 400);
+            }
+
+            // Clean barcode from any control characters
+            $barcode = trim($barcode);
+            $barcode = preg_replace('/[\x00-\x1F\x7F]/', '', $barcode); // Remove control characters
+            
+            // Try multiple extraction methods
+            $possibleCaseNumbers = [];
+            
+            // Method 1: Extract using regex pattern I2A-SAN-XXXXX
+            if (preg_match('/^([A-Z0-9-]{11,13})/', $barcode, $matches)) {
+                $possibleCaseNumbers[] = $matches[1];
+            }
+            
+            // Method 2: Extract first 12 characters
+            $possibleCaseNumbers[] = substr($barcode, 0, 12);
+            
+            // Method 3: Extract first 11 characters (in case scanner sends shorter)
+            $possibleCaseNumbers[] = substr($barcode, 0, 11);
+            
+            // Method 4: Extract first 13 characters
+            $possibleCaseNumbers[] = substr($barcode, 0, 13);
+            
+            // Remove duplicates and empty values
+            $possibleCaseNumbers = array_unique(array_filter($possibleCaseNumbers));
+            
+            // Try to find case with any of the possible case numbers
+            $case = null;
+            $caseNo = null;
+            
+            foreach ($possibleCaseNumbers as $possibleCaseNo) {
+                $case = CaseModel::where('case_no', $possibleCaseNo)->first();
+                if ($case) {
+                    $caseNo = $possibleCaseNo;
+                    break;
+                }
+            }
+            
+            // If no case found, use the first possible case number for error message
+            if (!$case) {
+                $caseNo = $possibleCaseNumbers[0] ?? substr($barcode, 0, 12);
+            }
+            
+            // Debug log
+            Log::info('Container scan - Original barcode: ' . $barcode);
+            Log::info('Container scan - Barcode length: ' . strlen($barcode));
+            Log::info('Container scan - Barcode bytes: ' . bin2hex($barcode));
+            Log::info('Container scan - Possible case numbers: ' . implode(', ', $possibleCaseNumbers));
+            Log::info('Container scan - Selected case number: ' . $caseNo);
+            Log::info('Container scan - Case found: ' . ($case ? 'YES' : 'NO'));
+            
+            if (!$case) {
+                // Get all cases for debugging
+                $allCases = CaseModel::all(['case_no']);
+                $caseNumbers = $allCases->pluck('case_no')->toArray();
+                
+                Log::info('Container scan - All cases in database: ' . implode(', ', $caseNumbers));
+                Log::info('Container scan - Searched case number: ' . $caseNo);
+                Log::info('Container scan - Case number length: ' . strlen($caseNo));
+                
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Case not found: ' . $caseNo . ' (Available: ' . implode(', ', $caseNumbers) . ')'
+                ], 404);
+            }
+
+            // Get content lists for this case
+            $contentLists = ContentList::where('case_id', $case->id)->get();
+            
+            // Get scan history for this case
+            $scanHistory = ScanHistory::where('case_id', $case->id)->get();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Container scanned successfully',
+                'data' => [
+                    'case' => $case,
+                    'content_lists' => $contentLists,
+                    'scan_history' => $scanHistory
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Container scan error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error processing container scan: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Scan box barcode and add to scan history
+     */
+    public function scanBox(Request $request)
+    {
+        try {
+            $barcode = $request->input('barcode');
+            $caseId = $request->input('case_id');
+            
+            if (!$barcode || !$caseId) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Barcode and case_id are required'
+                ], 400);
+            }
+
+            // Clean barcode from any control characters
+            $barcode = trim($barcode);
+            $barcode = preg_replace('/[\x00-\x1F\x7F]/', '', $barcode); // Remove control characters
+            
+            // Parse box barcode: I2A-SAN-00432-SA#23901-BZ140-00-87#00020#001-060#0#20250615#0#1B
+            $parts = explode('#', $barcode);
+            
+            if (count($parts) < 4) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid box barcode format'
+                ], 400);
+            }
+
+            // Extract case number using same method as container scan
+            $possibleCaseNumbers = [];
+            
+            // Method 1: Extract using regex pattern I2A-SAN-XXXXX
+            if (preg_match('/^([A-Z0-9-]{11,13})/', $parts[0], $matches)) {
+                $possibleCaseNumbers[] = $matches[1];
+            }
+            
+            // Method 2: Extract first 12 characters
+            $possibleCaseNumbers[] = substr($parts[0], 0, 12);
+            
+            // Method 3: Extract first 11 characters
+            $possibleCaseNumbers[] = substr($parts[0], 0, 11);
+            
+            // Method 4: Extract first 13 characters
+            $possibleCaseNumbers[] = substr($parts[0], 0, 13);
+            
+            // Remove duplicates and empty values
+            $possibleCaseNumbers = array_unique(array_filter($possibleCaseNumbers));
+            
+            // Try to find case with any of the possible case numbers
+            $boxCaseNo = null;
+            foreach ($possibleCaseNumbers as $possibleCaseNo) {
+                $case = CaseModel::where('case_no', $possibleCaseNo)->first();
+                if ($case) {
+                    $boxCaseNo = $possibleCaseNo;
+                    break;
+                }
+            }
+            
+            // If no case found, use the first possible case number for error message
+            if (!$boxCaseNo) {
+                $boxCaseNo = $possibleCaseNumbers[0] ?? substr($parts[0], 0, 12);
+            }
+            
+            // Debug logging
+            Log::info('Box scan - Original barcode: ' . $barcode);
+            Log::info('Box scan - Parts: ' . implode(' | ', $parts));
+            Log::info('Box scan - Possible case numbers: ' . implode(', ', $possibleCaseNumbers));
+            Log::info('Box scan - Selected case number: ' . $boxCaseNo);
+            
+            $partNo = $parts[1]; // 23901-BZ140-00-87
+            $quantity = (int) $parts[2]; // 00020
+            $sequence = substr($parts[3], 0, 3); // 001 from 001-060
+            $totalSequence = substr($parts[3], -3); // 060 from 001-060
+
+            // Verify case number matches
+            $case = CaseModel::find($caseId);
+            Log::info('Box scan - Container case number: ' . ($case ? $case->case_no : 'NOT FOUND'));
+            Log::info('Box scan - Box case number: ' . $boxCaseNo);
+            Log::info('Box scan - Case numbers match: ' . ($case && $case->case_no === $boxCaseNo ? 'YES' : 'NO'));
+            
+            if (!$case || $case->case_no !== $boxCaseNo) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Box case number does not match container case number. Container: ' . ($case ? $case->case_no : 'NOT FOUND') . ', Box: ' . $boxCaseNo
+                ], 400);
+            }
+
+            // Check if box with this sequence already scanned
+            $existingScan = ScanHistory::where('case_id', $caseId)
+                ->where('seq', $sequence)
+                ->first();
+
+            if ($existingScan) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Box with sequence ' . $sequence . ' has already been scanned'
+                ], 409);
+            }
+
+            // Calculate total quantity
+            $totalQty = $quantity * (int) $totalSequence;
+
+            // Create scan history record
+            $scanHistory = ScanHistory::create([
+                'case_id' => $caseId,
+                'box_no' => 'BOX_' . str_pad($sequence, 3, '0', STR_PAD_LEFT),
+                'part_no' => $partNo,
+                'scanned_qty' => $quantity,
+                'total_qty' => $totalQty,
+                'seq' => $sequence,
+                'status' => 'scanned',
+                'scanned_by' => 'Scanner'
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Box scanned successfully',
+                'data' => [
+                    'scan_history' => $scanHistory,
+                    'sequence' => $sequence,
+                    'quantity' => $quantity,
+                    'total_qty' => $totalQty
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Box scan error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error processing box scan: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Submit case when all items are scanned
+     */
+    public function submitCase(Request $request)
+    {
+        try {
+            $caseNo = $request->input('case_no');
+            
+            if (!$caseNo) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Case number is required'
+                ], 400);
+            }
+
+            $case = CaseModel::where('case_no', $caseNo)->first();
+            
+            if (!$case) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Case not found'
+                ], 404);
+            }
+
+            // Update case status to packed
+            $case->update(['status' => 'packed']);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Case submitted successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Case submit error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error submitting case: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function getCaseProgress($caseId)
+    {
+        try {
+            $case = CaseModel::find($caseId);
+            
+            if (!$case) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Case not found'
+                ], 404);
+            }
+            
+            $contentLists = ContentList::where('case_id', $case->id)->get();
+            $scanHistory = ScanHistory::where('case_id', $case->id)->get();
+            
+            // Calculate progress
+            $totalScanned = $scanHistory->sum('scanned_qty');
+            $totalExpected = $contentLists->sum('quantity');
+            $progress = $totalExpected > 0 ? $totalScanned . '/' . $totalExpected : '0/0';
+            
+            // Prepare scan progress data
+            $scanProgress = [
+                'part_no' => $contentLists->first()->part_no ?? 'N/A',
+                'part_name' => $contentLists->first()->part_name ?? 'N/A',
+                'quantity' => $totalExpected,
+                'progress' => $progress
+            ];
+            
+            // Prepare details data
+            $details = $contentLists->map(function($content) use ($scanHistory) {
+                $isScanned = $scanHistory->where('box_no', $content->box_no)
+                    ->where('part_no', $content->part_no)
+                    ->count() > 0;
+                
+                return [
+                    'box_no' => $content->box_no,
+                    'part_no' => $content->part_no,
+                    'part_name' => $content->part_name,
+                    'quantity' => $content->quantity,
+                    'is_scanned' => $isScanned
+                ];
+            });
+            
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'progress' => $progress,
+                    'scanProgress' => $scanProgress,
+                    'details' => $details,
+                    'scannedBoxes' => $scanHistory->count(),
+                    'totalBoxes' => $contentLists->count()
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Get case progress error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error getting case progress: ' . $e->getMessage()
+            ], 500);
+        }
     }
 } 

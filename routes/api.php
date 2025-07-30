@@ -20,6 +20,12 @@ Route::middleware('api')->group(function () {
         Route::post('/scan', [CaseMarkApiController::class, 'processScan'])->name('scan');
         Route::post('/mark-packed', [CaseMarkApiController::class, 'markAsPacked'])->name('mark.packed');
         
+        // New scanning endpoints
+        Route::post('/scan-container', [CaseMarkApiController::class, 'scanContainer'])->name('scan.container');
+Route::post('/scan-box', [CaseMarkApiController::class, 'scanBox'])->name('scan.box');
+Route::post('/submit-case', [CaseMarkApiController::class, 'submitCase'])->name('submit.case');
+Route::get('/get-case-progress/{caseId}', [CaseMarkApiController::class, 'getCaseProgress'])->name('get.case.progress');
+        
         // Excel preview
         Route::post('/preview-excel', [CaseMarkApiController::class, 'previewExcel'])->name('preview.excel');
         

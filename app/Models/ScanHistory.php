@@ -11,19 +11,21 @@ class ScanHistory extends Model
 
     protected $table = 'scan_history';
     
+    // Disable timestamps since we don't have created_at and updated_at columns
+    public $timestamps = false;
+    
     protected $fillable = [
         'case_id',
         'box_no',
         'part_no',
         'scanned_qty',
         'total_qty',
+        'seq',
         'status',
-        'packing_date',
         'scanned_by'
     ];
 
     protected $dates = [
-        'packing_date',
         'scanned_at'
     ];
 
