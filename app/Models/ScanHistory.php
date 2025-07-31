@@ -15,14 +15,13 @@ class ScanHistory extends Model
     public $timestamps = false;
     
     protected $fillable = [
-        'case_id',
+        'case_no',
         'box_no',
         'part_no',
         'scanned_qty',
         'total_qty',
         'seq',
-        'status',
-        'scanned_by'
+        'status'
     ];
 
     protected $dates = [
@@ -31,7 +30,7 @@ class ScanHistory extends Model
 
     public function case()
     {
-        return $this->belongsTo(CaseModel::class, 'case_id');
+        return $this->belongsTo(CaseModel::class, 'case_no', 'case_no');
     }
 
     public function getProgressAttribute()

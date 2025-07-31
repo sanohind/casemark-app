@@ -9,28 +9,27 @@ Route::get('/', function () {
 
 // Case Mark Routes
 Route::prefix('casemark')->name('casemark.')->group(function () {
-    
+
     // Dashboard
     Route::get('/', [CaseMarkController::class, 'index'])->name('dashboard');
-    
+
     // Content List
     Route::get('/content-list/{case_no?}', [CaseMarkController::class, 'contentList'])->name('content-list');
-    
+
     // History
     Route::get('/history', [CaseMarkController::class, 'history'])->name('history');
-    
+    Route::get('/history/{case_no}', [CaseMarkController::class, 'historyDetail'])->name('history.detail');
+
     // Upload Excel
     Route::get('/upload', [CaseMarkController::class, 'upload'])->name('upload');
     Route::post('/upload', [CaseMarkController::class, 'uploadExcel'])->name('upload.excel');
-    Route::post('/upload/preview', [CaseMarkController::class, 'previewExcel'])->name('upload.preview');
-    
+
     // List Case Mark
     Route::get('/list', [CaseMarkController::class, 'listCaseMark'])->name('list');
-    
+    Route::get('/list/{case_no}', [CaseMarkController::class, 'listCaseMarkDetail'])->name('list.detail');
 
     Route::post('/scan', [CaseMarkController::class, 'processScan'])->name('scan.process');
     Route::post('/mark-packed', [CaseMarkController::class, 'markAsPacked'])->name('mark.packed');
-    
 });
 
 // API Routes for AJAX calls

@@ -19,8 +19,16 @@ class CaseModel extends Model
         'case_size',
         'gross_weight',
         'net_weight',
-        'status'
+        'status',
+        'packing_date'
     ];
+
+     protected $casts = [
+        'packing_date' => 'datetime',
+        'gross_weight' => 'decimal:2',
+        'net_weight' => 'decimal:2',
+    ];
+
 
     public function contentLists()
     {
@@ -29,7 +37,7 @@ class CaseModel extends Model
 
     public function scanHistory()
     {
-        return $this->hasMany(ScanHistory::class, 'case_id');
+        return $this->hasMany(ScanHistory::class, 'case_no', 'case_no');
     }
 
     public function getProgressAttribute()

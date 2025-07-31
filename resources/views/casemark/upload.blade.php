@@ -9,6 +9,32 @@
         <h1 class="text-2xl font-bold text-gray-900">EXCEL UPLOAD</h1>
     </div>
 
+    <!-- Success Message -->
+    @if(session('success'))
+    <div class="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
+        <div class="flex items-center">
+            <i class="fas fa-check-circle text-green-600 mr-3"></i>
+            <div>
+                <h3 class="text-lg font-medium text-green-800">Success!</h3>
+                <p class="text-sm text-green-700">{{ session('success') }}</p>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    <!-- Error Message -->
+    @if(session('error'))
+    <div class="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+        <div class="flex items-center">
+            <i class="fas fa-exclamation-triangle text-red-600 mr-3"></i>
+            <div>
+                <h3 class="text-lg font-medium text-red-800">Error!</h3>
+                <p class="text-sm text-red-700">{{ session('error') }}</p>
+            </div>
+        </div>
+    </div>
+    @endif
+
     <!-- Upload Form -->
     <form action="{{ route('casemark.upload.excel') }}" method="POST" enctype="multipart/form-data" id="uploadForm">
         @csrf

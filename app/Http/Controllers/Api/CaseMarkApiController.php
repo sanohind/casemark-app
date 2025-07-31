@@ -47,7 +47,7 @@ class CaseMarkApiController extends Controller
             }
 
             // Check if already scanned
-            $existingScan = ScanHistory::where('case_id', $case->id)
+            $existingScan = ScanHistory::where('case_no', $case->case_no)
                 ->where('box_no', $boxData['box_no'])
                 ->where('part_no', $boxData['part_no'])
                 ->first();
@@ -61,13 +61,12 @@ class CaseMarkApiController extends Controller
 
             // Record scan
             $scanRecord = ScanHistory::create([
-                'case_id' => $case->id,
+                'case_no' => $case->case_no,
                 'box_no' => $boxData['box_no'],
                 'part_no' => $boxData['part_no'],
                 'scanned_qty' => $contentList->quantity,
                 'total_qty' => $contentList->quantity,
-                'status' => 'scanned',
-                'scanned_by' => $request->user()->name ?? 'System'
+                'status' => 'scanned'
             ]);
 
             return response()->json([
@@ -99,7 +98,7 @@ class CaseMarkApiController extends Controller
             $case = CaseModel::where('case_no', $request->case_no)->firstOrFail();
 
             // Check if there are scanned items
-            $scannedCount = ScanHistory::where('case_id', $case->id)
+            $scannedCount = ScanHistory::where('case_no', $case->case_no)
                 ->where('status', 'scanned')
                 ->count();
 
@@ -110,16 +109,21 @@ class CaseMarkApiController extends Controller
                 ]);
             }
 
-            // Update all scanned items to packed
-            ScanHistory::where('case_id', $case->id)
+            // PERBAIKAN: Gunakan timezone Asia/Jakarta
+            $jakartaTime = Carbon::now('Asia/Jakarta');
+
+            // Update all scanned items to unscanned (since we're changing the enum)
+            ScanHistory::where('case_no', $case->case_no)
                 ->where('status', 'scanned')
                 ->update([
-                    'status' => 'packed',
-                    'packing_date' => Carbon::now()
+                    'status' => 'unscanned'
                 ]);
 
-            // Update case status
-            $case->update(['status' => 'packed']);
+            // Update case status and packing_date
+            $case->update([
+                'status' => 'packed',
+                'packing_date' => $jakartaTime
+            ]);
 
             return response()->json([
                 'success' => true,
@@ -127,7 +131,7 @@ class CaseMarkApiController extends Controller
                 'data' => [
                     'case_no' => $case->case_no,
                     'packed_items' => $scannedCount,
-                    'packing_date' => Carbon::now()->format('d/m/Y H:i:s')
+                    'packing_date' => $jakartaTime->format('d/m/Y H:i:s')
                 ]
             ]);
         } catch (\Exception $e) {
@@ -138,170 +142,7 @@ class CaseMarkApiController extends Controller
         }
     }
 
-    public function getContainerInfo($caseNo)
-    {
-        try {
-            $case = CaseModel::with(['contentLists', 'scanHistory'])->where('case_no', $caseNo)->firstOrFail();
 
-            $totalBoxes = $case->contentLists()->count();
-            $scannedBoxes = $case->scanHistory()->distinct('box_no')->count();
-            $totalQuantity = $case->contentLists()->sum('quantity');
-            $scannedQuantity = $case->scanHistory()->sum('scanned_qty');
-
-            return response()->json([
-                'success' => true,
-                'data' => [
-                    'case_no' => $case->case_no,
-                    'destination' => $case->destination,
-                    'order_no' => $case->order_no,
-                    'prod_month' => $case->prod_month,
-                    'case_size' => $case->case_size,
-                    'gross_weight' => $case->gross_weight,
-                    'net_weight' => $case->net_weight,
-                    'status' => $case->status,
-                    'progress' => "{$scannedBoxes}/{$totalBoxes}",
-                    'total_boxes' => $totalBoxes,
-                    'scanned_boxes' => $scannedBoxes,
-                    'total_quantity' => $totalQuantity,
-                    'scanned_quantity' => $scannedQuantity,
-                    'completion_percentage' => $totalBoxes > 0 ? round(($scannedBoxes / $totalBoxes) * 100, 2) : 0
-                ]
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Container tidak ditemukan'
-            ], 404);
-        }
-    }
-
-    public function getStats()
-    {
-        try {
-            $totalCases = CaseModel::count();
-            $activeCases = CaseModel::where('status', 'active')->count();
-            $packedCases = CaseModel::where('status', 'packed')->count();
-            $shippedCases = CaseModel::where('status', 'shipped')->count();
-
-            $totalScans = ScanHistory::count();
-            $todayScans = ScanHistory::whereDate('scanned_at', Carbon::today())->count();
-
-            $recentActivity = ScanHistory::with('case')
-                ->latest('scanned_at')
-                ->take(10)
-                ->get()
-                ->map(function ($scan) {
-                    return [
-                        'case_no' => $scan->case->case_no,
-                        'box_no' => $scan->box_no,
-                        'part_no' => $scan->part_no,
-                        'scanned_at' => $scan->scanned_at->format('d/m/Y H:i'),
-                        'scanned_by' => $scan->scanned_by
-                    ];
-                });
-
-            return response()->json([
-                'success' => true,
-                'data' => [
-                    'cases' => [
-                        'total' => $totalCases,
-                        'active' => $activeCases,
-                        'packed' => $packedCases,
-                        'shipped' => $shippedCases
-                    ],
-                    'scans' => [
-                        'total' => $totalScans,
-                        'today' => $todayScans
-                    ],
-                    'recent_activity' => $recentActivity
-                ]
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error retrieving statistics'
-            ], 500);
-        }
-    }
-
-    public function getCaseStats($caseNo)
-    {
-        try {
-            $case = CaseModel::where('case_no', $caseNo)->firstOrFail();
-            $containerInfo = $this->getContainerInfo($caseNo);
-
-            $scanHistory = ScanHistory::where('case_id', $case->id)
-                ->with('case')
-                ->orderBy('scanned_at', 'desc')
-                ->get()
-                ->map(function ($scan) {
-                    return [
-                        'box_no' => $scan->box_no,
-                        'part_no' => $scan->part_no,
-                        'quantity' => $scan->scanned_qty,
-                        'status' => $scan->status,
-                        'scanned_at' => $scan->scanned_at->format('d/m/Y H:i:s'),
-                        'scanned_by' => $scan->scanned_by,
-                        'packing_date' => $scan->packing_date ? $scan->packing_date->format('d/m/Y H:i:s') : null
-                    ];
-                });
-
-            return response()->json([
-                'success' => true,
-                'data' => [
-                    'container_info' => $containerInfo->getData()->data,
-                    'scan_history' => $scanHistory
-                ]
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Case tidak ditemukan'
-            ], 404);
-        }
-    }
-
-    public function search(Request $request)
-    {
-        $query = $request->get('q', '');
-        $type = $request->get('type', 'all'); // all, cases, parts, boxes
-
-        $results = [];
-
-        if ($type === 'all' || $type === 'cases') {
-            $cases = CaseModel::where('case_no', 'LIKE', "%{$query}%")
-                ->orWhere('destination', 'LIKE', "%{$query}%")
-                ->orWhere('prod_month', 'LIKE', "%{$query}%")
-                ->take(10)
-                ->get(['case_no', 'destination', 'prod_month', 'status']);
-
-            $results['cases'] = $cases;
-        }
-
-        if ($type === 'all' || $type === 'parts') {
-            $parts = ContentList::where('part_no', 'LIKE', "%{$query}%")
-                ->orWhere('part_name', 'LIKE', "%{$query}%")
-                ->with('case:id,case_no')
-                ->take(10)
-                ->get(['part_no', 'part_name', 'case_id']);
-
-            $results['parts'] = $parts;
-        }
-
-        if ($type === 'all' || $type === 'boxes') {
-            $boxes = ScanHistory::where('box_no', 'LIKE', "%{$query}%")
-                ->with('case:id,case_no')
-                ->take(10)
-                ->get(['box_no', 'part_no', 'case_id', 'status', 'scanned_at']);
-
-            $results['boxes'] = $boxes;
-        }
-
-        return response()->json([
-            'success' => true,
-            'data' => $results
-        ]);
-    }
 
     public function previewExcel(Request $request)
     {
@@ -520,20 +361,7 @@ class CaseMarkApiController extends Controller
             $contentListData = [];
             $contentStartRow = 25; // Baris 25 adalah data pertama setelah header
 
-            // Debug: Log data dari baris 25-35 untuk melihat data yang sebenarnya
-            \Log::info('Content List Preview Debug - Rows 25-35:', [
-                'row25' => array_map('trim', $data[25] ?? []),
-                'row26' => array_map('trim', $data[26] ?? []),
-                'row27' => array_map('trim', $data[27] ?? []),
-                'row28' => array_map('trim', $data[28] ?? []),
-                'row29' => array_map('trim', $data[29] ?? []),
-                'row30' => array_map('trim', $data[30] ?? []),
-                'row31' => array_map('trim', $data[31] ?? []),
-                'row32' => array_map('trim', $data[32] ?? []),
-                'row33' => array_map('trim', $data[33] ?? []),
-                'row34' => array_map('trim', $data[34] ?? []),
-                'row35' => array_map('trim', $data[35] ?? [])
-            ]);
+
 
             for ($i = $contentStartRow; $i < count($data); $i++) {
                 $row = array_map('trim', $data[$i] ?? []);
@@ -570,34 +398,6 @@ class CaseMarkApiController extends Controller
                 }
             }
 
-            // Debug information (akan dihapus di production)
-            $debugInfo = [
-                'row19' => $row19,
-                'row20' => $row20,
-                'row21' => $row21,
-                'row22' => $row22,
-                'row23' => $row23,
-                'extracted_values' => [
-                    'destination' => $destination,
-                    'case_no' => $caseNo,
-                    'case_size' => $caseSize,
-                    'order_no' => $orderNo,
-                    'prod_month' => $prodMonth,
-                    'gross_weight' => $grossWeight,
-                    'net_weight' => $netWeight
-                ],
-                'column_mapping' => [
-                    'destination' => 'Kolom D (index 3)',
-                    'case_no' => 'Kolom L (index 11)',
-                    'case_size' => 'Kolom L (index 11)',
-                    'order_no' => 'Kolom D (index 3)',
-                    'prod_month' => 'Kolom D (index 3)',
-                    'gross_weight' => 'Kolom L (index 11)',
-                    'net_weight' => 'Kolom L (index 11)'
-                ],
-                'content_list_preview' => array_slice($contentListData, 0, 10) // Preview 10 item pertama
-            ];
-
             return response()->json([
                 'success' => true,
                 'data' => [
@@ -609,8 +409,7 @@ class CaseMarkApiController extends Controller
                     'gross_weight' => $grossWeight,
                     'net_weight' => $netWeight,
                     'content_list_preview' => $contentListData // Preview semua data
-                ],
-                'debug' => $debugInfo // Hapus ini di production
+                ]
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -742,7 +541,7 @@ class CaseMarkApiController extends Controller
             $contentLists = ContentList::where('case_id', $case->id)->get();
 
             // Get scan history for this case
-            $scanHistory = ScanHistory::where('case_id', $case->id)->get();
+            $scanHistory = ScanHistory::where('case_no', $case->case_no)->get();
 
             return response()->json([
                 'success' => true,
@@ -852,7 +651,7 @@ class CaseMarkApiController extends Controller
             }
 
             // Check if box with this sequence already scanned
-            $existingScan = ScanHistory::where('case_id', $caseId)
+            $existingScan = ScanHistory::where('case_no', $case->case_no)
                 ->where('seq', $sequence)
                 ->first();
 
@@ -872,14 +671,13 @@ class CaseMarkApiController extends Controller
 
             // Create scan history record
             $scanHistory = ScanHistory::create([
-                'case_id' => $caseId,
+                'case_no' => $case->case_no,
                 'box_no' => $boxNo, // Menggunakan variable yang sudah diperbaiki
                 'part_no' => $partNo,
                 'scanned_qty' => $quantity,
                 'total_qty' => $totalQty,
                 'seq' => $sequence,
-                'status' => 'scanned',
-                'scanned_by' => 'Scanner'
+                'status' => 'scanned'
             ]);
 
             return response()->json([
@@ -901,6 +699,9 @@ class CaseMarkApiController extends Controller
             ], 500);
         }
     }
+
+
+
 
     /**
      * Submit case when all items are scanned
@@ -926,12 +727,15 @@ class CaseMarkApiController extends Controller
                 ], 404);
             }
 
-            // Update case status to packed
-            $case->update(['status' => 'packed']);
+            // Update case status dengan timezone Jakarta
+            $case->update([
+                'status' => 'packed',
+                'packing_date' => Carbon::now('Asia/Jakarta')
+            ]);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Case submitted successfully'
+                'message' => 'Case submitted successfully. You can continue scanning other containers.'
             ]);
         } catch (\Exception $e) {
             Log::error('Case submit error: ' . $e->getMessage());
@@ -941,7 +745,6 @@ class CaseMarkApiController extends Controller
             ], 500);
         }
     }
-
     public function getCaseProgress($caseId)
     {
         try {
@@ -955,7 +758,7 @@ class CaseMarkApiController extends Controller
             }
 
             $contentLists = ContentList::where('case_id', $case->id)->get();
-            $scanHistory = ScanHistory::where('case_id', $case->id)->get();
+            $scanHistory = ScanHistory::where('case_no', $case->case_no)->get();
 
             // Calculate progress
             $totalScanned = $scanHistory->sum('scanned_qty');

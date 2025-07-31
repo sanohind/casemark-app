@@ -29,15 +29,5 @@ Route::get('/get-case-progress/{caseId}', [CaseMarkApiController::class, 'getCas
         // Excel preview
         Route::post('/preview-excel', [CaseMarkApiController::class, 'previewExcel'])->name('preview.excel');
         
-        // Container info
-        Route::get('/container-info/{caseNo}', [CaseMarkApiController::class, 'getContainerInfo'])->name('container.info');
-        
-        // Statistics
-        Route::get('/stats', [CaseMarkApiController::class, 'getStats'])->name('stats');
-        Route::get('/stats/{caseNo}', [CaseMarkApiController::class, 'getCaseStats'])->name('case.stats');
-        
-        // Search
-        Route::get('/search', [CaseMarkApiController::class, 'search'])->name('search');
-        
     });
 });

@@ -15,6 +15,7 @@ return new class extends Migration {
             $table->decimal('gross_weight', 8, 2);
             $table->decimal('net_weight', 8, 2);
             $table->enum('status', ['active', 'packed', 'shipped'])->default('active');
+            $table->timestamp('packing_date')->nullable();
             $table->timestamps();
         });
     }

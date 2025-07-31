@@ -108,7 +108,7 @@
     <div class="mb-8">
         <h2 class="text-lg font-semibold text-gray-900 mb-4">Scan Progress</h2>
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
+            <table id="scanProgressTable" class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-blue-900">
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">No.</th>
@@ -131,7 +131,7 @@
     <div class="mb-8">
         <h2 class="text-lg font-semibold text-gray-900 mb-4">Details</h2>
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
+            <table id="detailsTable" class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-blue-900">
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">No.</th>
@@ -423,7 +423,7 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.quantity}</td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${item.is_scanned ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">
-                                    ${item.is_scanned ? 'Scanned' : 'Not Scanned'}
+                                    ${item.is_scanned ? 'Scanned' : 'Unscanned'}
                                 </span>
                             </td>
                         `;
@@ -481,10 +481,10 @@
             },
             success: function(response) {
                 if (response.success) {
-                    showSuccessToast('Case submitted successfully!', 'Redirecting to case list...');
-                    setTimeout(() => {
-                        window.location.href = '{{ route("casemark.list") }}';
-                    }, 2000);
+                    showSuccessToast('Case submitted successfully!', 'You can continue scanning other containers.');
+                    
+                    // Reset the form for next container scan
+                    resetForm();
                 } else {
                     showErrorModal(response.message);
                 }
@@ -562,6 +562,30 @@
         const toast = document.getElementById('errorToast');
         toast.classList.remove('translate-x-0');
         toast.classList.add('translate-x-full');
+    }
+
+    function resetForm() {
+        // Reset current case data
+        currentCaseId = null;
+        currentCaseData = null;
+        
+        // Hide case info and box scanner
+        document.getElementById('caseInfo').classList.add('hidden');
+        document.getElementById('boxScanner').classList.add('hidden');
+        document.getElementById('submitContainer').classList.add('hidden');
+        
+        // Clear input fields
+        document.getElementById('containerBarcode').value = '';
+        document.getElementById('boxBarcode').value = '';
+        
+        // Clear tables
+        document.querySelector('#scanProgressTable tbody').innerHTML = 
+            '<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">No data - Scan container barcode to load case data</td></tr>';
+        document.querySelector('#detailsTable tbody').innerHTML = 
+            '<tr><td colspan="6" class="px-6 py-4 text-center text-gray-500">No data - Scan container barcode to load case data</td></tr>';
+        
+        // Focus on container barcode input
+        document.getElementById('containerBarcode').focus();
     }
 
     // Focus on container barcode input on page load

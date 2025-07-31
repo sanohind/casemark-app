@@ -26,9 +26,8 @@
             <select
                 class="appearance-none bg-blue-900 text-white px-4 py-2 pr-8 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <option>Status</option>
-                <option>Active</option>
-                <option>Packed</option>
-                <option>Shipped</option>
+                                        <option>Unpacked</option>
+                        <option>Packed</option>
             </select>
             <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-white">
                 <i class="fas fa-chevron-down"></i>
@@ -78,10 +77,7 @@
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $case->prod_month }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $case->progress }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        @php
-                        $lastPacked = $case->scanHistory()->where('status', 'packed')->orderBy('scanned_at', 'desc')->first();
-                        @endphp
-                        {{ $lastPacked ? $lastPacked->packing_date->format('d/m/Y H:i') : '-' }}
+                        {{ $case->packing_date ? $case->packing_date->format('d/m/Y H:i') : '-' }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
                         @if($case->status == 'packed')
@@ -89,11 +85,7 @@
                             class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
                             Packed
                         </span>
-                        @elseif($case->status == 'shipped')
-                        <span
-                            class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                            Shipped
-                        </span>
+
                         @else
                         @php
                         $totalBoxes = $case->contentLists()->count();
@@ -113,16 +105,10 @@
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div class="flex space-x-2">
-                            <a href="{{ route('casemark.content-list', $case->case_no) }}"
+                            <a href="{{ route('casemark.list.detail', $case->case_no) }}"
                                 class="text-blue-600 hover:text-blue-900">
                                 Detail
                             </a>
-                            @if($case->status == 'active')
-                            <button onclick="markAsPacked('{{ $case->case_no }}')"
-                                class="text-green-600 hover:text-green-900 ml-2">
-                                Mark Packed
-                            </button>
-                            @endif
                         </div>
                     </td>
                 </tr>
@@ -194,8 +180,8 @@
     <!-- Statistics -->
     <div class="mt-8 grid grid-cols-1 md:grid-cols-4 gap-4">
         <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
-            <div class="text-2xl font-bold text-blue-600">{{ $cases->where('status', 'active')->count() }}</div>
-            <div class="text-sm text-blue-800">Active Cases</div>
+            <div class="text-2xl font-bold text-blue-600">{{ $cases->where('status', 'unpacked')->count() }}</div>
+            <div class="text-sm text-blue-800">Unpacked Cases</div>
         </div>
 
         <div class="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
@@ -203,10 +189,7 @@
             <div class="text-sm text-green-800">Packed Cases</div>
         </div>
 
-        <div class="bg-purple-50 border border-purple-200 rounded-lg p-4 text-center">
-            <div class="text-2xl font-bold text-purple-600">{{ $cases->where('status', 'shipped')->count() }}</div>
-            <div class="text-sm text-purple-800">Shipped Cases</div>
-        </div>
+
 
         <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">
             <div class="text-2xl font-bold text-gray-600">{{ $cases->count() }}</div>
@@ -232,64 +215,64 @@
 
 @section('scripts')
 <script>
-let currentCaseNo = '';
+    let currentCaseNo = '';
 
-function markAsPacked(caseNo) {
-    currentCaseNo = caseNo;
-    document.getElementById('packModal').classList.remove('hidden');
-    document.getElementById('packModal').classList.add('flex');
-}
-
-function closeModal() {
-    document.getElementById('packModal').classList.add('hidden');
-    document.getElementById('packModal').classList.remove('flex');
-    currentCaseNo = '';
-}
-
-function confirmPack() {
-    if (!currentCaseNo) return;
-
-    $.ajax({
-        url: '{{ route("api.casemark.mark.packed") }}',
-        method: 'POST',
-        data: {
-            case_no: currentCaseNo
-        },
-        success: function(response) {
-            if (response.success) {
-                location.reload();
-            } else {
-                alert('Error: ' + response.message);
-            }
-        },
-        error: function() {
-            alert('An error occurred while marking as packed');
-        }
-    });
-
-    closeModal();
-}
-
-// Search functionality
-document.querySelector('input[placeholder="Search..."]').addEventListener('input', function(e) {
-    const searchTerm = e.target.value.toLowerCase();
-    const rows = document.querySelectorAll('tbody tr');
-
-    rows.forEach(row => {
-        const text = row.textContent.toLowerCase();
-        if (text.includes(searchTerm)) {
-            row.style.display = '';
-        } else {
-            row.style.display = 'none';
-        }
-    });
-});
-
-// Auto-refresh every 60 seconds
-setInterval(function() {
-    if (!document.hidden) {
-        location.reload();
+    function markAsPacked(caseNo) {
+        currentCaseNo = caseNo;
+        document.getElementById('packModal').classList.remove('hidden');
+        document.getElementById('packModal').classList.add('flex');
     }
-}, 60000);
+
+    function closeModal() {
+        document.getElementById('packModal').classList.add('hidden');
+        document.getElementById('packModal').classList.remove('flex');
+        currentCaseNo = '';
+    }
+
+    function confirmPack() {
+        if (!currentCaseNo) return;
+
+        $.ajax({
+            url: '{{ route("api.casemark.mark.packed") }}',
+            method: 'POST',
+            data: {
+                case_no: currentCaseNo
+            },
+            success: function(response) {
+                if (response.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + response.message);
+                }
+            },
+            error: function() {
+                alert('An error occurred while marking as packed');
+            }
+        });
+
+        closeModal();
+    }
+
+    // Search functionality
+    document.querySelector('input[placeholder="Search..."]').addEventListener('input', function(e) {
+        const searchTerm = e.target.value.toLowerCase();
+        const rows = document.querySelectorAll('tbody tr');
+
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            if (text.includes(searchTerm)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
+
+    // Auto-refresh every 60 seconds
+    setInterval(function() {
+        if (!document.hidden) {
+            location.reload();
+        }
+    }, 60000);
 </script>
 @endsection
