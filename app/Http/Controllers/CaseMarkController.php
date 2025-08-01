@@ -112,22 +112,27 @@ class CaseMarkController extends Controller
         ]);
 
         try {
-            // Create or update case
-            $case = CaseModel::updateOrCreate(
-                ['case_no' => $request->case_no],
-                [
-                    'destination' => (string)$request->destination,
-                    'order_no' => (string)$request->order_no,
-                    'prod_month' => (string)$request->prod_month,
-                    'case_size' => (string)$request->case_size,
-                    'gross_weight' => (float)$request->gross_weight,
-                    'net_weight' => (float)$request->net_weight,
-                    'status' => 'unpacked'
-                ]
-            );
+            // Check if case already exists
+            $existingCase = CaseModel::where('case_no', $request->case_no)->first();
+            
+            if ($existingCase) {
+                // Get existing content lists count for information
+                $existingContentCount = $existingCase->contentLists()->count();
+                
+                return back()->with('warning', "Case No. {$request->case_no} sudah pernah diupload sebelumnya dengan {$existingContentCount} item. Data akan diupdate dengan file baru.");
+            }
 
-            // Clear existing content lists
-            $case->contentLists()->delete();
+            // Create new case
+            $case = CaseModel::create([
+                'case_no' => $request->case_no,
+                'destination' => (string)$request->destination,
+                'order_no' => (string)$request->order_no,
+                'prod_month' => (string)$request->prod_month,
+                'case_size' => (string)$request->case_size,
+                'gross_weight' => (float)$request->gross_weight,
+                'net_weight' => (float)$request->net_weight,
+                'status' => 'unpacked'
+            ]);
 
             // Import Excel data dengan logging yang lebih detail
             Log::info('Starting Excel import for case:', [
@@ -145,7 +150,7 @@ class CaseMarkController extends Controller
                 'imported_records' => $importedCount
             ]);
 
-            return back()->with('success', "Excel berhasil diupload! {$importedCount} item berhasil diimport.");
+            return back()->with('success', "Excel berhasil diupload! {$importedCount} item berhasil diimport untuk Case No. {$request->case_no}.");
         } catch (\Exception $e) {
             Log::error('Excel import failed:', [
                 'error' => $e->getMessage(),

@@ -282,6 +282,17 @@
         }
     });
 
+    // Ensure box barcode field maintains focus when box scanner is visible
+    document.getElementById('boxBarcode').addEventListener('blur', function(e) {
+        // Only refocus if box scanner is visible and we're not switching to final barcode
+        setTimeout(() => {
+            if (document.getElementById('boxScanner').classList.contains('hidden') === false && 
+                !document.getElementById('finalBarcode').contains(document.activeElement)) {
+                this.focus();
+            }
+        }, 50);
+    });
+
     // ESC key support for manual clearing
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
@@ -381,7 +392,7 @@
                     // Focus on box scanner
                     setTimeout(() => {
                         document.getElementById('boxBarcode').focus();
-                    }, 2000);
+                    }, 500);
 
                     // Clear container barcode input
                     document.getElementById('containerBarcode').value = '';
@@ -439,8 +450,13 @@
                     // Clear box barcode input
                     document.getElementById('boxBarcode').value = '';
 
-                    // Focus logic: jika belum complete, focus ke box barcode lagi
-                    // Jika sudah complete, biarkan checkCompletion() yang handle focus ke final barcode
+                    // Focus back to box barcode input for next scan
+                    // Only focus if not complete (if complete, checkCompletion will handle focus)
+                    setTimeout(() => {
+                        if (document.getElementById('boxScanner').classList.contains('hidden') === false) {
+                            document.getElementById('boxBarcode').focus();
+                        }
+                    }, 100);
                 } else {
                     showErrorModal(response.message);
                 }
@@ -548,6 +564,13 @@
                         setTimeout(() => {
                             submit.classList.add('hidden');
                         }, 500);
+                        
+                        // Focus back to box barcode input if box scanner is visible
+                        setTimeout(() => {
+                            if (document.getElementById('boxScanner').classList.contains('hidden') === false) {
+                                document.getElementById('boxBarcode').focus();
+                            }
+                        }, 600);
                     }
                 }
             },
@@ -714,6 +737,14 @@
                 const activeElement = document.activeElement;
                 if (activeElement && (activeElement.id === 'containerBarcode' || activeElement.id === 'boxBarcode')) {
                     activeElement.value = '';
+                    // Focus back to the cleared field
+                    setTimeout(() => {
+                        if (currentCaseId && document.getElementById('boxScanner').classList.contains('hidden') === false) {
+                            document.getElementById('boxBarcode').focus();
+                        } else if (!currentCaseId) {
+                            document.getElementById('containerBarcode').focus();
+                        }
+                    }, 100);
                 }
             }
         }, 3000);

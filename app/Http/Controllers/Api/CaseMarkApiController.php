@@ -396,6 +396,19 @@ class CaseMarkApiController extends Controller
                 }
             }
 
+            // Check if case already exists
+            $existingCase = null;
+            $caseExists = false;
+            $existingContentCount = 0;
+            
+            if (!empty($caseNo)) {
+                $existingCase = CaseModel::where('case_no', $caseNo)->first();
+                if ($existingCase) {
+                    $caseExists = true;
+                    $existingContentCount = $existingCase->contentLists()->count();
+                }
+            }
+
             return response()->json([
                 'success' => true,
                 'data' => [
@@ -406,7 +419,10 @@ class CaseMarkApiController extends Controller
                     'prod_month' => $prodMonth,
                     'gross_weight' => $grossWeight,
                     'net_weight' => $netWeight,
-                    'content_list_preview' => $contentListData // Preview all data
+                    'content_list_preview' => $contentListData, // Preview all data
+                    'case_exists' => $caseExists,
+                    'existing_content_count' => $existingContentCount,
+                    'warning_message' => $caseExists ? "Case No. {$caseNo} sudah pernah diupload sebelumnya dengan {$existingContentCount} item." : null
                 ]
             ]);
         } catch (\Exception $e) {

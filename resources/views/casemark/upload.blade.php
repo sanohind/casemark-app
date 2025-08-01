@@ -22,6 +22,19 @@
     </div>
     @endif
 
+    <!-- Warning Message -->
+    @if(session('warning'))
+    <div class="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <div class="flex items-center">
+            <i class="fas fa-exclamation-triangle text-yellow-600 mr-3"></i>
+            <div>
+                <h3 class="text-lg font-medium text-yellow-800">Warning!</h3>
+                <p class="text-sm text-yellow-700">{{ session('warning') }}</p>
+            </div>
+        </div>
+    </div>
+    @endif
+
     <!-- Error Message -->
     @if(session('error'))
     <div class="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
@@ -220,6 +233,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const fileInput = document.getElementById('excel_file');
     const fileName = document.getElementById('fileName');
     const uploadForm = document.getElementById('uploadForm');
+    let currentCaseExists = false; // Track if current case exists
     
     fileInput.addEventListener('change', function(e) {
         if (e.target.files.length > 0) {
@@ -237,6 +251,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 uploadBtn.disabled = false;
                 uploadBtn.classList.remove('opacity-50');
             });
+        }
+    });
+
+    // Add form submit event listener
+    uploadForm.addEventListener('submit', function(e) {
+        if (currentCaseExists) {
+            e.preventDefault();
+            
+            const confirmMessage = `Case No. ${document.querySelector('input[name="case_no"]').value} sudah pernah diupload sebelumnya. Apakah Anda yakin ingin melanjutkan? Data lama akan diupdate dengan data baru.`;
+            
+            if (confirm(confirmMessage)) {
+                // User confirmed, proceed with form submission
+                uploadForm.submit();
+            }
         }
     });
 
@@ -271,6 +299,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 const existingError = document.querySelector('.text-red-600');
                 if (existingError) {
                     existingError.remove();
+                }
+                
+                // Tampilkan warning jika case sudah ada
+                if (result.data.case_exists && result.data.warning_message) {
+                    currentCaseExists = true;
+                    const warningMessage = document.createElement('div');
+                    warningMessage.className = 'mt-4 p-3 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded';
+                    warningMessage.innerHTML = `<i class="fas fa-exclamation-triangle mr-2"></i>${result.data.warning_message}`;
+                    
+                    const previewSection = document.querySelector('.mb-8');
+                    previewSection.appendChild(warningMessage);
+                    
+                    // Hapus warning setelah 10 detik
+                    setTimeout(() => {
+                        warningMessage.remove();
+                    }, 10000);
+                } else {
+                    currentCaseExists = false;
                 }
                 
                 // Debug information (akan dihapus di production)
