@@ -11,7 +11,7 @@ Route::get('/', function () {
 Route::prefix('casemark')->name('casemark.')->group(function () {
 
     // Dashboard
-    Route::get('/', [CaseMarkController::class, 'index'])->name('dashboard');
+    Route::get('/', [CaseMarkController::class, 'contentList'])->name('content-list');
 
     // Content List
     Route::get('/content-list/{case_no?}', [CaseMarkController::class, 'contentList'])->name('content-list');
