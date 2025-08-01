@@ -10,23 +10,21 @@
     </div>
 
     <!-- Container Scanner Section -->
-    <div class="mb-8">
-        <div class="bg-white rounded-lg shadow p-6">
-            <h2 class="text-lg font-semibold text-gray-900 mb-4">Scan Container Barcode</h2>
-
-            <div class="mb-4">
-                <label for="containerBarcode" class="block text-sm font-medium text-gray-700 mb-2">
+    <div id="containerScanner" class="mb-8">
+        <div class="bg-white rounded-lg shadow p-4"> <!-- p-4 lebih kecil dari p-6 -->
+            <h2 class="text-base font-semibold text-gray-900 mb-3">Scan Container Barcode</h2>
+            <div class="mb-3">
+                <label for="containerBarcode" class="block text-xs font-medium text-gray-700 mb-1">
                     Container Barcode
                 </label>
                 <input type="text"
                     id="containerBarcode"
-                    class="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg font-mono"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-base font-mono"
                     placeholder="Scan container barcode to load case data..."
                     autofocus>
             </div>
-
             <button type="button" onclick="scanContainer()"
-                class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-md font-medium flex items-center">
+                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium flex items-center text-base">
                 <i class="fas fa-qrcode mr-2"></i>
                 Scan Container
             </button>
@@ -35,26 +33,45 @@
 
     <!-- Box Scanner Section (Hidden initially) -->
     <div id="boxScanner" class="mb-8 hidden">
-        <div class="bg-white rounded-lg shadow p-6">
-            <h2 class="text-lg font-semibold text-gray-900 mb-4">Scan Box Barcode</h2>
-
-            <div class="mb-4">
-                <label for="boxBarcode" class="block text-sm font-medium text-gray-700 mb-2">
+        <div class="bg-white rounded-lg shadow p-4">
+            <h2 class="text-base font-semibold text-gray-900 mb-3">Scan Box Barcode</h2>
+            <div class="mb-3">
+                <label for="boxBarcode" class="block text-xs font-medium text-gray-700 mb-1">
                     Box Barcode
                 </label>
                 <input type="text"
                     id="boxBarcode"
-                    class="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-lg font-mono"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-base font-mono"
                     placeholder="Scan box barcode...">
             </div>
-
             <button type="button" onclick="scanBox()"
-                class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-md font-medium flex items-center">
+                class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md font-medium flex items-center text-base">
                 <i class="fas fa-barcode mr-2"></i>
                 Scan Box
             </button>
         </div>
     </div>
+
+    <!-- Final Barcode Scanner Section (Hidden initially) -->
+    <!-- <div id="finalBarcodeScanner" class="mb-8 hidden">
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Scan Final Barcode</h2>
+            <div class="mb-4">
+                <label for="finalBarcode" class="block text-sm font-medium text-gray-700 mb-2">
+                    Final Barcode
+                </label>
+                <input type="text"
+                    id="finalBarcode"
+                    class="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg font-mono"
+                    placeholder="Scan final barcode...">
+            </div>
+            <button type="button" onclick="scanFinalBarcode()"
+                class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-md font-medium flex items-center">
+                <i class="fas fa-qrcode mr-2"></i>
+                Scan Final Barcode
+            </button>
+        </div>
+    </div> -->
 
     <!-- Case Information Section (Hidden initially) -->
     <div id="caseInfo" class="mb-8 hidden">
@@ -152,24 +169,51 @@
     </div>
 
     <!-- Submit Button (Hidden initially) -->
+    <!-- Submit Section (Updated) - Ganti bagian Submit Button dengan ini -->
     <div id="submitContainer" class="mt-8 text-center hidden">
         <div class="bg-green-50 border border-green-200 rounded-lg p-6">
             <div class="flex items-center justify-center mb-4">
                 <i class="fas fa-check-circle text-green-500 text-3xl mr-3"></i>
                 <h3 class="text-lg font-semibold text-green-900">All Items Scanned!</h3>
             </div>
-            <p class="text-green-700 mb-4">All items have been successfully scanned.</p>
-            <button type="button" onclick="submitCase()"
-                class="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-md font-medium text-lg">
-                <i class="fas fa-check mr-2"></i>
-                Submit Case
-            </button>
+            <p class="text-green-700 mb-6">All items have been successfully scanned. Choose your submit method:</p>
+
+            <!-- Submit Options -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
+                <!-- Manual Submit Button -->
+                <div class="bg-white border border-green-200 rounded-lg p-4">
+                    <h4 class="font-semibold text-green-900 mb-2">Manual Submit</h4>
+                    <p class="text-sm text-gray-600 mb-4">Click the button below to submit this case manually.</p>
+                    <button type="button" onclick="submitCase()"
+                        class="w-full bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-md font-medium">
+                        <i class="fas fa-check mr-2"></i>
+                        Submit Case
+                    </button>
+                </div>
+
+                <!-- Final Barcode Submit -->
+                <div class="bg-white border border-blue-200 rounded-lg p-4">
+                    <h4 class="font-semibold text-blue-900 mb-2">Final Barcode Submit</h4>
+                    <p class="text-sm text-gray-600 mb-4">Scan the final barcode to submit this case automatically.</p>
+                    <div class="mb-3">
+                        <input type="text"
+                            id="finalBarcode"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-mono"
+                            placeholder="Scan final barcode...">
+                    </div>
+                    <button type="button" onclick="scanFinalBarcode()"
+                        class="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-md font-medium">
+                        <i class="fas fa-qrcode mr-2"></i>
+                        Scan Final Barcode
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
 <!-- Success Notification Toast -->
-<div id="successToast" class="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg transform translate-x-full transition-transform duration-300 z-50">
+<div id="successToast" class="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg transform translate-x-full transition-transform duration-300 z-50" style="display: none;">
     <div class="flex items-center">
         <i class="fas fa-check-circle mr-3"></i>
         <div>
@@ -180,7 +224,7 @@
 </div>
 
 <!-- Error Notification Toast -->
-<div id="errorToast" class="fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg transform translate-x-full transition-transform duration-300 z-50">
+<div id="errorToast" class="fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg transform translate-x-full transition-transform duration-300 z-50" style="display: none;">
     <div class="flex items-center">
         <i class="fas fa-exclamation-triangle mr-3"></i>
         <div>
@@ -243,10 +287,61 @@
         if (e.key === 'Escape') {
             // Clear current active input field
             const activeElement = document.activeElement;
-            if (activeElement && (activeElement.id === 'containerBarcode' || activeElement.id === 'boxBarcode')) {
+            if (activeElement && (activeElement.id === 'containerBarcode' || activeElement.id === 'boxBarcode' || activeElement.id === 'finalBarcode')) {
                 activeElement.value = '';
             }
         }
+    });
+
+    // Add ESC key support for final barcode field
+    document.addEventListener('DOMContentLoaded', function() {
+        // Existing focus on container barcode
+        document.getElementById('containerBarcode').focus();
+        
+        // Event delegation untuk final barcode (akan bekerja untuk field yang muncul setelah DOM loaded)
+        document.addEventListener('keypress', function(e) {
+            if (e.target && e.target.id === 'finalBarcode') {
+                if (e.key === 'Enter') {
+                    console.log('Enter pressed on finalBarcode, calling scanFinalBarcode');
+                    scanFinalBarcode();
+                }
+            }
+        });
+        
+        document.addEventListener('input', function(e) {
+            if (e.target && e.target.id === 'finalBarcode') {
+                const barcode = e.target.value;
+                console.log('Final barcode input:', barcode);
+                const hashCount = (barcode.match(/#/g) || []).length;
+                
+                // Jika format final barcode pakai #, minimal 3 parts
+                if (hashCount >= 3 && barcode.length >= 20) {
+                    console.log('Auto-triggering scan (final barcode format)');
+                    setTimeout(() => {
+                        if (e.target.value === barcode) {
+                            scanFinalBarcode();
+                        }
+                    }, 100);
+                }
+                // Jika format final barcode sama dengan barcode container (tanpa #, minimal 11 karakter)
+                else if (barcode.length >= 11 && !barcode.includes('#')) {
+                    console.log('Auto-triggering scan (container format)');
+                    setTimeout(() => {
+                        if (e.target.value === barcode) {
+                            scanFinalBarcode();
+                        }
+                    }, 100);
+                }
+            }
+        });
+        
+        // ESC key support untuk final barcode
+        document.addEventListener('keydown', function(e) {
+            if (e.target && e.target.id === 'finalBarcode' && e.key === 'Escape') {
+                e.target.value = '';
+                e.target.focus();
+            }
+        });
     });
 
     function scanContainer() {
@@ -274,6 +369,8 @@
 
                     // Show box scanner
                     document.getElementById('boxScanner').classList.remove('hidden');
+                    document.getElementById('containerScanner').classList.add('hidden');
+                    document.getElementById('submitContainer').classList.add('hidden');
 
                     // Update progress tables
                     updateProgressTables(response.data);
@@ -306,6 +403,7 @@
         });
     }
 
+    // Update fungsi scanBox untuk memberikan feedback yang lebih baik saat completion
     function scanBox() {
         const barcode = document.getElementById('boxBarcode').value;
 
@@ -338,14 +436,11 @@
                     // Check if all items are scanned
                     checkCompletion();
 
-                    // Focus back on box scanner
-                    setTimeout(() => {
-                        document.getElementById('boxBarcode').focus();
-                    }, 2000);
-
                     // Clear box barcode input
                     document.getElementById('boxBarcode').value = '';
 
+                    // Focus logic: jika belum complete, focus ke box barcode lagi
+                    // Jika sudah complete, biarkan checkCompletion() yang handle focus ke final barcode
                 } else {
                     showErrorModal(response.message);
                 }
@@ -358,7 +453,7 @@
                 setTimeout(() => {
                     document.getElementById('boxBarcode').value = '';
                     document.getElementById('boxBarcode').focus();
-                }, 3000); // Clear after 3 seconds to give user time to read error
+                }, 3000);
             }
         });
     }
@@ -435,6 +530,25 @@
                     if (data.scannedBoxes >= data.totalBoxes && data.totalBoxes > 0) {
                         showSubmitButton(data.totalBoxes);
                     }
+
+                    // Cek jika sudah complete, sembunyikan box scanner, tampilkan submitContainer (bukan finalBarcodeScanner)
+                    if (data.scannedBoxes >= data.totalBoxes && data.totalBoxes > 0) {
+                        document.getElementById('boxScanner').classList.add('hidden');
+                        const submit = document.getElementById('submitContainer');
+                        submit.classList.remove('hidden');
+                        setTimeout(() => {
+                            submit.classList.add('visible');
+                            document.getElementById('finalBarcode').focus();
+                            // Hapus attachFinalBarcodeListeners() karena sudah menggunakan event delegation
+                        }, 100);
+                    } else {
+                        document.getElementById('boxScanner').classList.remove('hidden');
+                        const submit = document.getElementById('submitContainer');
+                        submit.classList.remove('visible');
+                        setTimeout(() => {
+                            submit.classList.add('hidden');
+                        }, 500);
+                    }
                 }
             },
             error: function(xhr) {
@@ -443,11 +557,25 @@
         });
     }
 
+    // Update fungsi showSubmitButton untuk auto focus ke final barcode field
     function showSubmitButton(totalExpected) {
         const submitContainer = document.getElementById('submitContainer');
         submitContainer.classList.remove('hidden');
+
+        // Auto focus ke final barcode field setelah submit container ditampilkan
+        setTimeout(() => {
+            const finalBarcodeInput = document.getElementById('finalBarcode');
+            if (finalBarcodeInput) {
+                finalBarcodeInput.focus();
+                finalBarcodeInput.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+            }
+        }, 500); // Delay 500ms untuk memastikan element sudah terrender
     }
 
+    // Update fungsi checkCompletion untuk langsung focus jika sudah complete
     function checkCompletion() {
         if (!currentCaseId) return;
 
@@ -460,6 +588,12 @@
                     const data = response.data;
                     if (data.scannedBoxes >= data.totalBoxes && data.totalBoxes > 0) {
                         showSubmitButton(data.totalBoxes);
+
+                        // Show completion notification dengan instruksi
+                        showSuccessToast(
+                            'All boxes scanned!',
+                            'Please scan final barcode or click submit button to complete the case.'
+                        );
                     }
                 }
             },
@@ -482,7 +616,7 @@
             success: function(response) {
                 if (response.success) {
                     showSuccessToast('Case submitted successfully!', 'You can continue scanning other containers.');
-                    
+
                     // Reset the form for next container scan
                     resetForm();
                 } else {
@@ -496,18 +630,80 @@
         });
     }
 
+    // Update fungsi scanFinalBarcode untuk better error handling
+    function scanFinalBarcode() {
+        const barcode = document.getElementById('finalBarcode').value;
+
+        if (!barcode) {
+            showErrorToast('Please enter final barcode');
+            // Keep focus on final barcode field
+            setTimeout(() => {
+                document.getElementById('finalBarcode').focus();
+            }, 100);
+            return;
+        }
+
+        if (!currentCaseId) {
+            showErrorToast('No active case to submit');
+            return;
+        }
+
+        $.ajax({
+            url: '/api/casemark/scan-final-barcode',
+            method: 'POST',
+            data: {
+                barcode: barcode,
+                case_id: currentCaseId,
+                _token: $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(response) {
+                if (response.success) {
+                    showSuccessToast('Case submitted successfully via final barcode!', 'You can continue scanning other containers.');
+
+                    // Reset the form for next container scan
+                    resetForm();
+
+                    // Clear final barcode input
+                    document.getElementById('finalBarcode').value = '';
+                } else {
+                    showErrorModal(response.message);
+                    // Keep focus on final barcode field for retry
+                    setTimeout(() => {
+                        document.getElementById('finalBarcode').value = '';
+                        document.getElementById('finalBarcode').focus();
+                    }, 3000);
+                }
+            },
+            error: function(xhr) {
+                const response = xhr.responseJSON;
+                showErrorToast(response ? response.message : 'Error scanning final barcode');
+
+                // Clear input field and keep focus for retry
+                setTimeout(() => {
+                    document.getElementById('finalBarcode').value = '';
+                    document.getElementById('finalBarcode').focus();
+                }, 3000);
+            }
+        });
+    }
+
     // Handle error modal - show error toast instead and auto-clear input
     function showErrorModal(message) {
         showErrorToast(message, true);
     }
 
     function showSuccessToast(title, message, autoClearInput = false) {
+    const toast = document.getElementById('successToast');
+    if (toast) {
         document.getElementById('toastTitle').textContent = title;
         document.getElementById('toastMessage').textContent = message;
-
-        const toast = document.getElementById('successToast');
-        toast.classList.remove('translate-x-full');
-        toast.classList.add('translate-x-0');
+        
+        // Show and animate
+        toast.style.display = 'block';
+        setTimeout(() => {
+            toast.classList.remove('translate-x-full');
+            toast.classList.add('translate-x-0');
+        }, 10);
 
         // Auto hide after 3 seconds
         setTimeout(() => {
@@ -522,19 +718,32 @@
             }
         }, 3000);
     }
+}
 
-    function hideSuccessToast() {
-        const toast = document.getElementById('successToast');
+function hideSuccessToast() {
+    const toast = document.getElementById('successToast');
+    if (toast) {
         toast.classList.remove('translate-x-0');
         toast.classList.add('translate-x-full');
+        
+        // Hide completely after animation
+        setTimeout(() => {
+            toast.style.display = 'none';
+        }, 300);
     }
+}
 
-    function showErrorToast(message, autoClearInput = true) {
+function showErrorToast(message, autoClearInput = true) {
+    const toast = document.getElementById('errorToast');
+    if (toast) {
         document.getElementById('errorToastMessage').textContent = message;
-
-        const toast = document.getElementById('errorToast');
-        toast.classList.remove('translate-x-full');
-        toast.classList.add('translate-x-0');
+        
+        // Show and animate
+        toast.style.display = 'block';
+        setTimeout(() => {
+            toast.classList.remove('translate-x-full');
+            toast.classList.add('translate-x-0');
+        }, 10);
 
         // Auto hide after 3 seconds
         setTimeout(() => {
@@ -555,42 +764,51 @@
                     }
                 }
             }
-        }, 3000); // 3 seconds for better UX
+        }, 3000);
     }
+}
 
-    function hideErrorToast() {
-        const toast = document.getElementById('errorToast');
+function hideErrorToast() {
+    const toast = document.getElementById('errorToast');
+    if (toast) {
         toast.classList.remove('translate-x-0');
         toast.classList.add('translate-x-full');
+        
+        // Hide completely after animation
+        setTimeout(() => {
+            toast.style.display = 'none';
+        }, 300);
     }
+}
 
     function resetForm() {
         // Reset current case data
         currentCaseId = null;
         currentCaseData = null;
-        
+
         // Hide case info and box scanner
         document.getElementById('caseInfo').classList.add('hidden');
         document.getElementById('boxScanner').classList.add('hidden');
-        document.getElementById('submitContainer').classList.add('hidden');
-        
+        const submit = document.getElementById('submitContainer');
+        submit.classList.remove('visible');
+        setTimeout(() => {
+            submit.classList.add('hidden');
+        }, 500);
+        document.getElementById('containerScanner').classList.remove('hidden');
+
         // Clear input fields
         document.getElementById('containerBarcode').value = '';
         document.getElementById('boxBarcode').value = '';
-        
+        document.getElementById('finalBarcode').value = '';
+
         // Clear tables
-        document.querySelector('#scanProgressTable tbody').innerHTML = 
+        document.querySelector('#scanProgressTable tbody').innerHTML =
             '<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">No data - Scan container barcode to load case data</td></tr>';
-        document.querySelector('#detailsTable tbody').innerHTML = 
+        document.querySelector('#detailsTable tbody').innerHTML =
             '<tr><td colspan="6" class="px-6 py-4 text-center text-gray-500">No data - Scan container barcode to load case data</td></tr>';
-        
+
         // Focus on container barcode input
         document.getElementById('containerBarcode').focus();
     }
-
-    // Focus on container barcode input on page load
-    document.addEventListener('DOMContentLoaded', function() {
-        document.getElementById('containerBarcode').focus();
-    });
 </script>
 @endsection

@@ -9,3 +9,16 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
+
+/* Animasi transisi untuk submitContainer */
+#submitContainer {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.4,0,0.2,1);
+    pointer-events: none;
+}
+#submitContainer.visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}

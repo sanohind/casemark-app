@@ -42,7 +42,7 @@ class CaseMarkApiController extends Controller
             if (!$contentList) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Box tidak sesuai dengan content list! Box: ' . $boxData['box_no'] . ', Part: ' . $boxData['part_no']
+                    'message' => 'Box does not match content list! Box: ' . $boxData['box_no'] . ', Part: ' . $boxData['part_no']
                 ]);
             }
 
@@ -55,7 +55,7 @@ class CaseMarkApiController extends Controller
             if ($existingScan) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Box ' . $boxData['box_no'] . ' sudah pernah discan pada ' . $existingScan->scanned_at->format('d/m/Y H:i')
+                    'message' => 'Box ' . $boxData['box_no'] . ' has already been scanned on ' . $existingScan->scanned_at->format('d/m/Y H:i')
                 ]);
             }
 
@@ -71,7 +71,7 @@ class CaseMarkApiController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Box berhasil discan!',
+                'message' => 'Box scanned successfully!',
                 'data' => [
                     'box_no' => $boxData['box_no'],
                     'part_no' => $boxData['part_no'],
@@ -83,7 +83,7 @@ class CaseMarkApiController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+                'message' => 'An error occurred: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -105,7 +105,7 @@ class CaseMarkApiController extends Controller
             if ($scannedCount === 0) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Tidak ada box yang discan untuk case ini'
+                    'message' => 'No boxes have been scanned for this case'
                 ]);
             }
 
@@ -127,7 +127,7 @@ class CaseMarkApiController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Case ' . $case->case_no . ' berhasil dipacked!',
+                'message' => 'Case ' . $case->case_no . ' successfully packed!',
                 'data' => [
                     'case_no' => $case->case_no,
                     'packed_items' => $scannedCount,
@@ -137,7 +137,7 @@ class CaseMarkApiController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+                'message' => 'An error occurred: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -152,24 +152,24 @@ class CaseMarkApiController extends Controller
             $file = $request->file('excel_file');
             $data = \Maatwebsite\Excel\Facades\Excel::toArray([], $file)[0];
 
-            // Mulai dari baris 19 (index 18) sesuai dengan format Excel yang diberikan
-            $startRow = 18; // Baris 19 dalam Excel (0-based index)
+            // Start from row 19 (index 18) according to the provided Excel format
+            $startRow = 18; // Row 19 in Excel (0-based index)
 
             if (count($data) <= $startRow) {
-                throw new \Exception('File Excel tidak memiliki cukup baris data');
+                throw new \Exception('File Excel does not have enough data rows');
             }
 
-            // Fungsi helper untuk ekstrak nilai berdasarkan pola
+            // Helper function to extract values based on patterns
             $extractValue = function ($row, $patterns, $valueColumnIndex = null, $cleanNumeric = false) {
                 foreach ($row as $i => $cell) {
                     $cellValue = trim((string)$cell);
                     foreach ($patterns as $pattern) {
                         if (preg_match($pattern, $cellValue)) {
-                            // Jika valueColumnIndex tidak ditentukan, ambil dari kolom berikutnya
+                            // If valueColumnIndex is not specified, take from the next column
                             $targetIndex = $valueColumnIndex !== null ? $valueColumnIndex : ($i + 1);
                             $value = trim((string)($row[$targetIndex] ?? ''));
 
-                            // Jika cleanNumeric true, bersihkan nilai dari unit seperti "KGS", "KG", dll
+                            // If cleanNumeric is true, clean the value from units like "KGS", "KG", etc.
                             if ($cleanNumeric) {
                                 return preg_replace('/[^0-9.]/', '', $value);
                             }
@@ -180,7 +180,7 @@ class CaseMarkApiController extends Controller
                 return '';
             };
 
-            // Fungsi untuk mencari nilai berdasarkan posisi kolom yang spesifik
+            // Function to find values based on specific column positions
             $extractValueByPosition = function ($row, $columnIndex, $cleanNumeric = false) {
                 if (isset($row[$columnIndex])) {
                     $value = trim((string)$row[$columnIndex]);
@@ -192,16 +192,16 @@ class CaseMarkApiController extends Controller
                 return '';
             };
 
-            // Ambil data dari baris 19-25 (sesuai dengan format Excel)
-            $row19 = array_map('trim', $data[$startRow] ?? []); // Baris 19
-            $row20 = array_map('trim', $data[$startRow + 1] ?? []); // Baris 20  
-            $row21 = array_map('trim', $data[$startRow + 2] ?? []); // Baris 21
-            $row22 = array_map('trim', $data[$startRow + 3] ?? []); // Baris 22
-            $row23 = array_map('trim', $data[$startRow + 4] ?? []); // Baris 23
-            $row24 = array_map('trim', $data[$startRow + 5] ?? []); // Baris 24
-            $row25 = array_map('trim', $data[$startRow + 6] ?? []); // Baris 25
+            // Get data from rows 19-25 (according to Excel format)
+            $row19 = array_map('trim', $data[$startRow] ?? []); // Row 19
+            $row20 = array_map('trim', $data[$startRow + 1] ?? []); // Row 20  
+            $row21 = array_map('trim', $data[$startRow + 2] ?? []); // Row 21
+            $row22 = array_map('trim', $data[$startRow + 3] ?? []); // Row 22
+            $row23 = array_map('trim', $data[$startRow + 4] ?? []); // Row 23
+            $row24 = array_map('trim', $data[$startRow + 5] ?? []); // Row 24
+            $row25 = array_map('trim', $data[$startRow + 6] ?? []); // Row 25
 
-            // Debug: Tampilkan isi baris untuk troubleshooting
+            // Debug: Show row contents for troubleshooting
             \Log::info('Excel Data Debug', [
                 'row19' => $row19,
                 'row20' => $row20,
@@ -212,52 +212,52 @@ class CaseMarkApiController extends Controller
                 'row25' => $row25
             ]);
 
-            // Ekstrak data berdasarkan format Excel yang diberikan
-            // Destination - tidak perlu clean numeric
+            // Extract data according to the provided Excel format
+            // Destination - no need to clean numeric
             $destination = $extractValue($row19, ['/DESTINATION/i'], 3, false);
             if (empty($destination)) {
-                $destination = trim((string)($row19[3] ?? '')); // Kolom D
+                $destination = trim((string)($row19[3] ?? '')); // Column D
             }
 
-            // Case No - tidak perlu clean numeric
+            // Case No - no need to clean numeric
             $caseNo = $extractValue($row19, ['/CASE NO\./i'], 11, false);
             if (empty($caseNo)) {
-                $caseNo = trim((string)($row19[11] ?? '')); // Kolom L
+                $caseNo = trim((string)($row19[11] ?? '')); // Column L
             }
 
-            // Case Size - tidak perlu clean numeric
+            // Case Size - no need to clean numeric
             $caseSize = $extractValue($row20, ['/C\/SIZE/i'], 11, false);
             if (empty($caseSize)) {
-                $caseSize = trim((string)($row20[11] ?? '')); // Kolom L
+                $caseSize = trim((string)($row20[11] ?? '')); // Column L
             }
 
-            // Order No - tidak perlu clean numeric
+            // Order No - no need to clean numeric
             $orderNo = $extractValue($row22, ['/ORDER NO\./i'], 3, false);
             if (empty($orderNo)) {
-                $orderNo = trim((string)($row22[3] ?? '')); // Kolom D
+                $orderNo = trim((string)($row22[3] ?? '')); // Column D
             }
 
-            // Prod Month - tidak perlu clean numeric
+            // Prod Month - no need to clean numeric
             $prodMonth = $extractValue($row23, ['/PROD\. MONTH/i'], 3, false);
             if (empty($prodMonth)) {
-                $prodMonth = trim((string)($row23[3] ?? '')); // Kolom D
+                $prodMonth = trim((string)($row23[3] ?? '')); // Column D
             }
 
-            // Gross Weight - perlu clean numeric
+            // Gross Weight - need to clean numeric
             $grossWeight = $extractValue($row21, ['/G\/W/i'], 11, true);
             if (empty($grossWeight)) {
-                $grossWeight = $extractValueByPosition($row21, 11, true); // Kolom L
+                $grossWeight = $extractValueByPosition($row21, 11, true); // Column L
             }
 
-            // Net Weight - perlu clean numeric
+            // Net Weight - need to clean numeric
             $netWeight = $extractValue($row22, ['/N\/W/i'], 11, true);
             if (empty($netWeight)) {
-                $netWeight = $extractValueByPosition($row22, 11, true); // Kolom L
+                $netWeight = $extractValueByPosition($row22, 11, true); // Column L
             }
 
-            // Fallback: Jika masih kosong, coba dengan pola yang lebih fleksibel
+            // Fallback: If still empty, try with more flexible patterns
             if (empty($caseNo)) {
-                // Cari pola "CASE NO." di baris 19
+                // Look for "CASE NO." pattern in row 19
                 foreach ($row19 as $i => $cell) {
                     if (stripos($cell, 'CASE NO') !== false) {
                         $caseNo = trim((string)($row19[$i + 1] ?? ''));
@@ -267,7 +267,7 @@ class CaseMarkApiController extends Controller
             }
 
             if (empty($caseSize)) {
-                // Cari pola "C/SIZE" di baris 20
+                // Look for "C/SIZE" pattern in row 20
                 foreach ($row20 as $i => $cell) {
                     if (stripos($cell, 'C/SIZE') !== false) {
                         $caseSize = trim((string)($row20[$i + 1] ?? ''));
@@ -277,7 +277,7 @@ class CaseMarkApiController extends Controller
             }
 
             if (empty($orderNo)) {
-                // Cari pola "ORDER NO." di baris 22
+                // Look for "ORDER NO." pattern in row 22
                 foreach ($row22 as $i => $cell) {
                     if (stripos($cell, 'ORDER NO') !== false) {
                         $orderNo = trim((string)($row22[$i + 1] ?? ''));
@@ -287,7 +287,7 @@ class CaseMarkApiController extends Controller
             }
 
             if (empty($grossWeight)) {
-                // Cari pola "G/W" di baris 21
+                // Look for "G/W" pattern in row 21
                 foreach ($row21 as $i => $cell) {
                     if (stripos($cell, 'G/W') !== false) {
                         $grossWeight = preg_replace('/[^0-9.]/', '', trim((string)($row21[$i + 1] ?? '')));
@@ -297,7 +297,7 @@ class CaseMarkApiController extends Controller
             }
 
             if (empty($netWeight)) {
-                // Cari pola "N/W" di baris 22
+                // Look for "N/W" pattern in row 22
                 foreach ($row22 as $i => $cell) {
                     if (stripos($cell, 'N/W') !== false) {
                         $netWeight = preg_replace('/[^0-9.]/', '', trim((string)($row22[$i + 1] ?? '')));
@@ -306,9 +306,9 @@ class CaseMarkApiController extends Controller
                 }
             }
 
-            // Final fallback: Coba dengan posisi kolom yang berbeda
+            // Final fallback: Try with different column positions
             if (empty($caseNo)) {
-                // Coba kolom yang berbeda untuk Case No (prioritas kolom L)
+                // Try different columns for Case No (priority column L)
                 for ($i = 11; $i <= 13; $i++) {
                     if (!empty($row19[$i])) {
                         $caseNo = trim((string)$row19[$i]);
@@ -318,7 +318,7 @@ class CaseMarkApiController extends Controller
             }
 
             if (empty($caseSize)) {
-                // Coba kolom yang berbeda untuk Case Size (prioritas kolom L)
+                // Try different columns for Case Size (priority column L)
                 for ($i = 11; $i <= 13; $i++) {
                     if (!empty($row20[$i])) {
                         $caseSize = trim((string)$row20[$i]);
@@ -328,7 +328,7 @@ class CaseMarkApiController extends Controller
             }
 
             if (empty($orderNo)) {
-                // Coba kolom yang berbeda untuk Order No
+                // Try different columns for Order No
                 for ($i = 2; $i <= 6; $i++) {
                     if (!empty($row22[$i])) {
                         $orderNo = trim((string)$row22[$i]);
@@ -338,7 +338,7 @@ class CaseMarkApiController extends Controller
             }
 
             if (empty($grossWeight)) {
-                // Coba kolom yang berbeda untuk Gross Weight (prioritas kolom L)
+                // Try different columns for Gross Weight (priority column L)
                 for ($i = 11; $i <= 13; $i++) {
                     if (!empty($row21[$i])) {
                         $grossWeight = preg_replace('/[^0-9.]/', '', trim((string)$row21[$i]));
@@ -348,7 +348,7 @@ class CaseMarkApiController extends Controller
             }
 
             if (empty($netWeight)) {
-                // Coba kolom yang berbeda untuk Net Weight (prioritas kolom L)
+                // Try different columns for Net Weight (priority column L)
                 for ($i = 11; $i <= 13; $i++) {
                     if (!empty($row22[$i])) {
                         $netWeight = preg_replace('/[^0-9.]/', '', trim((string)$row22[$i]));
@@ -357,35 +357,33 @@ class CaseMarkApiController extends Controller
                 }
             }
 
-            // Parse content list data (baris 25 ke bawah)
+            // Parse content list data (rows 25 and below)
             $contentListData = [];
-            $contentStartRow = 25; // Baris 25 adalah data pertama setelah header
-
-
+            $contentStartRow = 25; // Row 25 is the first data after header
 
             for ($i = $contentStartRow; $i < count($data); $i++) {
                 $row = array_map('trim', $data[$i] ?? []);
 
-                // Skip baris kosong
+                // Skip empty rows
                 if (empty(array_filter($row))) {
                     continue;
                 }
 
-                // Parse data content list berdasarkan format yang sebenarnya
-                $no = trim((string)($row[0] ?? '')); // Kolom 0 - NO.
-                $boxNo = trim((string)($row[1] ?? '')); // Kolom 1 - BOX NO.
-                $partNo = trim((string)($row[3] ?? '')); // Kolom 3 - PART NO. (bukan 2)
-                $partName = trim((string)($row[4] ?? '')); // Kolom 4 - PART NAME (bukan 3)
-                $quantity = trim((string)($row[8] ?? '0')); // Kolom 8 - QTY (bukan 4)
-                $remark = trim((string)($row[5] ?? '')); // Kolom 5 - REMARK
+                // Parse content list data according to actual format
+                $no = trim((string)($row[0] ?? '')); // Column 0 - NO.
+                $boxNo = trim((string)($row[1] ?? '')); // Column 1 - BOX NO.
+                $partNo = trim((string)($row[3] ?? '')); // Column 3 - PART NO. (not 2)
+                $partName = trim((string)($row[4] ?? '')); // Column 4 - PART NAME (not 3)
+                $quantity = trim((string)($row[8] ?? '0')); // Column 8 - QTY (not 4)
+                $remark = trim((string)($row[5] ?? '')); // Column 5 - REMARK
 
-                // Jika part_no kosong, gunakan part_name sebagai part_no
+                // If part_no is empty, use part_name as part_no
                 if (empty($partNo) && !empty($partName)) {
                     $partNo = $partName;
-                    $partName = ''; // Kosongkan part_name karena sudah dipindah ke part_no
+                    $partName = ''; // Clear part_name because it's moved to part_no
                 }
 
-                // Validasi data yang diperlukan - hanya box_no yang wajib
+                // Validate required data - only box_no is mandatory
                 if (!empty($boxNo)) {
                     $contentListData[] = [
                         'no' => $no,
@@ -408,7 +406,7 @@ class CaseMarkApiController extends Controller
                     'prod_month' => $prodMonth,
                     'gross_weight' => $grossWeight,
                     'net_weight' => $netWeight,
-                    'content_list_preview' => $contentListData // Preview semua data
+                    'content_list_preview' => $contentListData // Preview all data
                 ]
             ]);
         } catch (\Exception $e) {
@@ -665,14 +663,14 @@ class CaseMarkApiController extends Controller
             // Calculate total quantity
             $totalQty = $quantity * (int) $totalSequence;
 
-            // PERBAIKAN: Konversi sequence ke integer dulu, lalu pad dengan 2 digit
-            $sequenceInt = (int) $sequence; // Konversi "002" menjadi 2
-            $boxNo = 'BOX_' . str_pad($sequenceInt, 2, '0', STR_PAD_LEFT); // Pad dengan 2 digit: "BOX_02"
+            // FIX: Convert sequence to integer first, then pad with 2 digits
+            $sequenceInt = (int) $sequence; // Convert "002" to 2
+            $boxNo = 'BOX_' . str_pad($sequenceInt, 2, '0', STR_PAD_LEFT); // Pad with 2 digits: "BOX_02"
 
             // Create scan history record
             $scanHistory = ScanHistory::create([
                 'case_no' => $case->case_no,
-                'box_no' => $boxNo, // Menggunakan variable yang sudah diperbaiki
+                'box_no' => $boxNo, // Using the corrected variable
                 'part_no' => $partNo,
                 'scanned_qty' => $quantity,
                 'total_qty' => $totalQty,
@@ -688,7 +686,7 @@ class CaseMarkApiController extends Controller
                     'sequence' => $sequence,
                     'quantity' => $quantity,
                     'total_qty' => $totalQty,
-                    'box_no' => $boxNo // Untuk debugging
+                    'box_no' => $boxNo // For debugging
                 ]
             ]);
         } catch (\Exception $e) {
@@ -700,7 +698,171 @@ class CaseMarkApiController extends Controller
         }
     }
 
+    /**
+     * Scan final barcode to submit case
+     */
+    public function scanFinalBarcode(Request $request)
+    {
+        try {
+            $barcode = $request->input('barcode');
+            $caseId = $request->input('case_id');
 
+            if (!$barcode || !$caseId) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Barcode and case_id are required'
+                ], 400);
+            }
+
+            // Clean barcode from any control characters
+            $barcode = trim($barcode);
+            $barcode = preg_replace('/[\x00-\x1F\x7F]/', '', $barcode); // Remove control characters
+
+            // Check if barcode contains '#' (final barcode format) or not (container barcode format)
+            $isFinalBarcodeFormat = strpos($barcode, '#') !== false;
+            
+            if ($isFinalBarcodeFormat) {
+                // Final barcode format: I2A-SAN-00432-SA#CR-06PG_40#20250615#1B
+                $parts = explode('#', $barcode);
+                
+                // Validasi minimal 3 parts (case_no#part_info#date#status)
+                if (count($parts) < 3) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Invalid final barcode format. Expected format: CASE_NO#PART_INFO#DATE#STATUS'
+                    ], 400);
+                }
+                
+                // Extract case number from first part
+                $possibleCaseNumbers = [];
+                if (preg_match('/^([A-Z0-9-]{11,13})/', $parts[0], $matches)) {
+                    $possibleCaseNumbers[] = $matches[1];
+                }
+                $possibleCaseNumbers[] = substr($parts[0], 0, 12);
+                $possibleCaseNumbers[] = substr($parts[0], 0, 11);
+                $possibleCaseNumbers[] = substr($parts[0], 0, 13);
+                $possibleCaseNumbers = array_unique(array_filter($possibleCaseNumbers));
+                
+                $case = null;
+                $finalCaseNo = null;
+                foreach ($possibleCaseNumbers as $possibleCaseNo) {
+                    $case = CaseModel::where('case_no', $possibleCaseNo)->first();
+                    if ($case) {
+                        $finalCaseNo = $possibleCaseNo;
+                        break;
+                    }
+                }
+                
+                if (!$case) {
+                    $finalCaseNo = $possibleCaseNumbers[0] ?? substr($parts[0], 0, 12);
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Case not found: ' . $finalCaseNo
+                    ], 404);
+                }
+                
+                // Optional: Validate date format if present (part index 2)
+                if (isset($parts[2]) && !empty($parts[2])) {
+                    $datePart = $parts[2];
+                    if (!preg_match('/^\d{8}$/', $datePart)) { // Format: YYYYMMDD
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Invalid date format in final barcode. Expected format: YYYYMMDD'
+                        ], 400);
+                    }
+                }
+            } else {
+                // Container barcode format (same as scanContainer method)
+                $possibleCaseNumbers = [];
+                if (preg_match('/^([A-Z0-9-]{11,13})/', $barcode, $matches)) {
+                    $possibleCaseNumbers[] = $matches[1];
+                }
+                $possibleCaseNumbers[] = substr($barcode, 0, 12);
+                $possibleCaseNumbers[] = substr($barcode, 0, 11);
+                $possibleCaseNumbers[] = substr($barcode, 0, 13);
+                $possibleCaseNumbers = array_unique(array_filter($possibleCaseNumbers));
+                
+                $case = null;
+                $finalCaseNo = null;
+                foreach ($possibleCaseNumbers as $possibleCaseNo) {
+                    $case = CaseModel::where('case_no', $possibleCaseNo)->first();
+                    if ($case) {
+                        $finalCaseNo = $possibleCaseNo;
+                        break;
+                    }
+                }
+                
+                if (!$case) {
+                    $finalCaseNo = $possibleCaseNumbers[0] ?? substr($barcode, 0, 12);
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Case not found: ' . $finalCaseNo
+                    ], 404);
+                }
+            }
+
+            // Debug logging
+            Log::info('Final barcode scan - Original barcode: ' . $barcode);
+            Log::info('Final barcode scan - Barcode length: ' . strlen($barcode));
+            Log::info('Final barcode scan - Is final format: ' . ($isFinalBarcodeFormat ? 'YES' : 'NO'));
+            Log::info('Final barcode scan - Selected case number: ' . $finalCaseNo);
+
+            // Verify case ID matches
+            if ($case->id != $caseId) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Final barcode case number does not match current case'
+                ], 400);
+            }
+
+            // Check if case is already packed
+            if ($case->status === 'packed') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Case ' . $finalCaseNo . ' has already been packed'
+                ], 400);
+            }
+
+            // Check if all boxes are scanned
+            $contentLists = ContentList::where('case_id', $case->id)->get();
+            $scanHistory = ScanHistory::where('case_no', $case->case_no)->get();
+
+            $totalBoxes = $contentLists->count();
+            $scannedBoxes = $scanHistory->count();
+
+            if ($scannedBoxes < $totalBoxes) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot submit case. Not all boxes have been scanned. (' . $scannedBoxes . '/' . $totalBoxes . ')'
+                ], 400);
+            }
+
+            // Update case status with Jakarta timezone
+            $jakartaTime = Carbon::now('Asia/Jakarta');
+
+            $case->update([
+                'status' => 'packed',
+                'packing_date' => $jakartaTime
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Case ' . $case->case_no . ' successfully submitted via final barcode scan!',
+                'data' => [
+                    'case_no' => $case->case_no,
+                    'packed_items' => $scannedBoxes,
+                    'packing_date' => $jakartaTime->format('d/m/Y H:i:s'),
+                    'submit_method' => 'final_barcode'
+                ]
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Final barcode scan error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error processing final barcode scan: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 
 
     /**
@@ -727,7 +889,7 @@ class CaseMarkApiController extends Controller
                 ], 404);
             }
 
-            // Update case status dengan timezone Jakarta
+            // Update case status with Jakarta timezone
             $case->update([
                 'status' => 'packed',
                 'packing_date' => Carbon::now('Asia/Jakarta')
@@ -773,13 +935,13 @@ class CaseMarkApiController extends Controller
                 'progress' => $progress
             ];
 
-            // Prepare details data - PERBAIKAN: Gunakan logika yang benar untuk menentukan status
+            // Prepare details data - FIX: Use correct logic to determine status
             $details = $contentLists->map(function ($content) use ($scanHistory) {
-                // PERBAIKAN: Cari berdasarkan box_no saja karena dari scan box, 
-                // box_no dibuat dari sequence dan part_no dari barcode mungkin berbeda format
+                // FIX: Search by box_no only because from scan box, 
+                // box_no is created from sequence and part_no from barcode might have different format
                 $scannedBox = $scanHistory->where('box_no', $content->box_no)->first();
 
-                // Jika tidak ditemukan berdasarkan box_no, coba cari berdasarkan kombinasi box_no dan part_no
+                // If not found by box_no, try searching by combination of box_no and part_no
                 if (!$scannedBox) {
                     $scannedBox = $scanHistory->where('box_no', $content->box_no)
                         ->where('part_no', $content->part_no)
@@ -793,8 +955,8 @@ class CaseMarkApiController extends Controller
                     'part_no' => $content->part_no,
                     'part_name' => $content->part_name,
                     'quantity' => $content->quantity,
-                    'status' => $isScanned, // Gunakan boolean
-                    'is_scanned' => $isScanned // Tambahkan property ini untuk konsistensi dengan blade
+                    'status' => $isScanned, // Use boolean
+                    'is_scanned' => $isScanned // Add this property for consistency with blade
                 ];
             });
 
@@ -804,7 +966,7 @@ class CaseMarkApiController extends Controller
                     'progress' => $progress,
                     'scanProgress' => $scanProgress,
                     'details' => $details,
-                    'scannedBoxes' => $scanHistory->count(), // Hitung berdasarkan jumlah record scan_history
+                    'scannedBoxes' => $scanHistory->count(), // Count based on number of scan_history records
                     'totalBoxes' => $contentLists->count()
                 ]
             ]);

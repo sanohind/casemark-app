@@ -240,13 +240,16 @@
             },
             success: function(response) {
                 if (response.success) {
-                    location.reload();
+                    showSuccessToast('Success!', 'Case marked as packed successfully!');
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1500);
                 } else {
-                    alert('Error: ' + response.message);
+                    showErrorToast('Error', response.message);
                 }
             },
             error: function() {
-                alert('An error occurred while marking as packed');
+                showErrorToast('Error', 'An error occurred while marking as packed');
             }
         });
 
