@@ -35,8 +35,8 @@ Pastikan sistem Anda memiliki:
 ### 2. Clone Repository
 
 ```bash
-git clone https://github.com/your-repo/case-mark-system.git
-cd case-mark-system
+git clone https://github.com/your-repo/casemark-app.git
+cd casemark-app
 ```
 
 ### 3. Install Dependencies
