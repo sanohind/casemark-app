@@ -23,11 +23,12 @@
     <!-- Filters -->
     <div class="mb-6 flex space-x-4">
         <div class="relative">
-            <select
+            <select id="statusFilter"
                 class="appearance-none bg-blue-900 text-white px-4 py-2 pr-8 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option>Status</option>
-                                        <option>Unpacked</option>
-                        <option>Packed</option>
+                <option value="">All Status</option>
+                <option value="unpacked">Unpacked</option>
+                <option value="in-progress">In Progress</option>
+                <option value="packed">Packed</option>
             </select>
             <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-white">
                 <i class="fas fa-chevron-down"></i>
@@ -35,12 +36,12 @@
         </div>
 
         <div class="relative">
-            <select
+            <select id="prodMonthFilter"
                 class="appearance-none bg-blue-900 text-white px-4 py-2 pr-8 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option>Prod. Month</option>
-                <option>202506</option>
-                <option>202505</option>
-                <option>202504</option>
+                <option value="">All Prod. Month</option>
+                @foreach($cases->unique('prod_month') as $case)
+                <option value="{{ $case->prod_month }}">{{ $case->prod_month }}</option>
+                @endforeach
             </select>
             <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-white">
                 <i class="fas fa-chevron-down"></i>
@@ -67,7 +68,7 @@
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
                 @forelse($cases as $index => $case)
-                <tr class="{{ $index % 2 == 0 ? 'bg-white' : 'bg-gray-50' }}">
+                <tr class="{{ $index % 2 == 0 ? 'bg-white' : 'bg-gray-50' }}" data-prod-month="{{ $case->prod_month }}">
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $cases->firstItem() + $index }}.
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $case->case_no }}</td>
@@ -179,17 +180,40 @@
 
     <!-- Statistics -->
     <div class="mt-8 grid grid-cols-1 md:grid-cols-4 gap-4">
+        @php
+            $unpackedCount = 0;
+            $inProgressCount = 0;
+            $packedCount = 0;
+            
+            foreach($cases as $case) {
+                if($case->status == 'packed') {
+                    $packedCount++;
+                } else {
+                    $totalBoxes = $case->contentLists()->count();
+                    $scannedBoxes = $case->scanHistory()->distinct('box_no')->count();
+                    if($scannedBoxes > 0 && $scannedBoxes < $totalBoxes) {
+                        $inProgressCount++;
+                    } else {
+                        $unpackedCount++;
+                    }
+                }
+            }
+        @endphp
+        
         <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
-            <div class="text-2xl font-bold text-blue-600">{{ $cases->where('status', 'unpacked')->count() }}</div>
+            <div class="text-2xl font-bold text-blue-600">{{ $unpackedCount }}</div>
             <div class="text-sm text-blue-800">Unpacked Cases</div>
         </div>
 
-        <div class="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
-            <div class="text-2xl font-bold text-green-600">{{ $cases->where('status', 'packed')->count() }}</div>
-            <div class="text-sm text-green-800">Packed Cases</div>
+        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
+            <div class="text-2xl font-bold text-yellow-600">{{ $inProgressCount }}</div>
+            <div class="text-sm text-yellow-800">In Progress Cases</div>
         </div>
 
-
+        <div class="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+            <div class="text-2xl font-bold text-green-600">{{ $packedCount }}</div>
+            <div class="text-sm text-green-800">Packed Cases</div>
+        </div>
 
         <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">
             <div class="text-2xl font-bold text-gray-600">{{ $cases->count() }}</div>
@@ -264,6 +288,51 @@
         rows.forEach(row => {
             const text = row.textContent.toLowerCase();
             if (text.includes(searchTerm)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
+
+    // Filter Status
+    const statusSelect = document.getElementById('statusFilter');
+    statusSelect.addEventListener('change', function(e) {
+        const status = e.target.value.toLowerCase();
+        const rows = document.querySelectorAll('tbody tr');
+        
+        rows.forEach(row => {
+            if (status === '') {
+                // Show all rows when "All Status" is selected
+                row.style.display = '';
+            } else {
+                // Get the status text from the status column (7th column)
+                const statusCell = row.querySelector('td:nth-child(7)');
+                if (statusCell) {
+                    const statusText = statusCell.textContent.toLowerCase().trim();
+                    
+                    if (status === 'unpacked' && statusText.includes('unpacked')) {
+                        row.style.display = '';
+                    } else if (status === 'in-progress' && statusText.includes('in progress')) {
+                        row.style.display = '';
+                    } else if (status === 'packed' && statusText.includes('packed')) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                } else {
+                    row.style.display = 'none';
+                }
+            }
+        });
+    });
+    // Filter Prod Month
+    const prodMonthSelect = document.getElementById('prodMonthFilter');
+    prodMonthSelect.addEventListener('change', function(e) {
+        const prodMonth = e.target.value;
+        const rows = document.querySelectorAll('tbody tr[data-prod-month]');
+        rows.forEach(row => {
+            if (prodMonth === '' || row.getAttribute('data-prod-month') === prodMonth) {
                 row.style.display = '';
             } else {
                 row.style.display = 'none';

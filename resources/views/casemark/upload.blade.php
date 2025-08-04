@@ -289,63 +289,37 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             if (result.success) {
-                // Update semua field form
+                // Jika case sudah ada, tampilkan warning, sembunyikan preview, dan disable submit
+                if (result.data.case_exists && result.data.warning_message) {
+                    currentCaseExists = true;
+                    // Tampilkan warning
+                    const warningMessage = document.createElement('div');
+                    warningMessage.className = 'mt-4 p-3 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded';
+                    warningMessage.innerHTML = `<i class="fas fa-exclamation-triangle mr-2"></i>${result.data.warning_message}`;
+                    const previewSection = document.querySelector('.mb-8');
+                    previewSection.appendChild(warningMessage);
+                    setTimeout(() => { warningMessage.remove(); }, 10000);
+                    // Sembunyikan preview
+                    document.getElementById('boxDetailsPreview').style.display = 'none';
+                    // Disable tombol submit
+                    document.getElementById('uploadBtn').disabled = true;
+                    document.getElementById('uploadBtn').classList.add('opacity-50', 'cursor-not-allowed');
+                    return; // Stop, jangan update preview
+                } else {
+                    currentCaseExists = false;
+                    // Enable tombol submit
+                    document.getElementById('uploadBtn').disabled = false;
+                    document.getElementById('uploadBtn').classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+                // Update semua field form & preview
                 updateFormFields(result.data);
                 fileName.textContent = `File dipilih: ${file.name}`;
                 fileName.classList.remove('text-blue-600', 'text-red-600');
                 fileName.classList.add('text-green-600');
-                
                 // Hapus pesan error jika ada
                 const existingError = document.querySelector('.text-red-600');
                 if (existingError) {
                     existingError.remove();
-                }
-                
-                // Tampilkan warning jika case sudah ada
-                if (result.data.case_exists && result.data.warning_message) {
-                    currentCaseExists = true;
-                    const warningMessage = document.createElement('div');
-                    warningMessage.className = 'mt-4 p-3 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded';
-                    warningMessage.innerHTML = `<i class="fas fa-exclamation-triangle mr-2"></i>${result.data.warning_message}`;
-                    
-                    const previewSection = document.querySelector('.mb-8');
-                    previewSection.appendChild(warningMessage);
-                    
-                    // Hapus warning setelah 10 detik
-                    setTimeout(() => {
-                        warningMessage.remove();
-                    }, 10000);
-                } else {
-                    currentCaseExists = false;
-                }
-                
-                // Debug information (akan dihapus di production)
-                if (result.debug) {
-                    console.log('Debug info:', result.debug);
-                    console.log('Extracted data:', result.data);
-                    
-                    // Tampilkan debug info di halaman untuk troubleshooting
-                    const debugDiv = document.createElement('div');
-                    debugDiv.className = 'mt-4 p-3 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded text-xs';
-                    debugDiv.innerHTML = `
-                        <strong>Debug Info:</strong><br>
-                        <strong>Column Mapping:</strong> ${JSON.stringify(result.debug.column_mapping)}<br>
-                        <strong>Row 19:</strong> ${JSON.stringify(result.debug.row19)}<br>
-                        <strong>Row 20:</strong> ${JSON.stringify(result.debug.row20)}<br>
-                        <strong>Row 21:</strong> ${JSON.stringify(result.debug.row21)}<br>
-                        <strong>Row 22:</strong> ${JSON.stringify(result.debug.row22)}<br>
-                        <strong>Row 23:</strong> ${JSON.stringify(result.debug.row23)}<br>
-                        <strong>Extracted Values:</strong> ${JSON.stringify(result.debug.extracted_values)}<br>
-                        <strong>Content List Preview:</strong> ${JSON.stringify(result.debug.content_list_preview)}
-                    `;
-                    
-                    const previewSection = document.querySelector('.mb-8');
-                    previewSection.appendChild(debugDiv);
-                    
-                    // Hapus debug info setelah 10 detik
-                    setTimeout(() => {
-                        debugDiv.remove();
-                    }, 10000);
                 }
             } else {
                 throw new Error(result.message || 'Format file tidak sesuai');
@@ -355,19 +329,13 @@ document.addEventListener('DOMContentLoaded', function() {
             fileName.textContent = `Error: ${error.message}`;
             fileName.classList.remove('text-blue-600', 'text-green-600');
             fileName.classList.add('text-red-600');
-            
             // Tampilkan pesan error yang lebih detail
             const errorMessage = document.createElement('div');
             errorMessage.className = 'mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded';
             errorMessage.innerHTML = `<i class="fas fa-exclamation-triangle mr-2"></i>Error: ${error.message}`;
-            
             const previewSection = document.querySelector('.mb-8');
             previewSection.appendChild(errorMessage);
-            
-            // Hapus pesan setelah 5 detik
-            setTimeout(() => {
-                errorMessage.remove();
-            }, 5000);
+            setTimeout(() => { errorMessage.remove(); }, 5000);
         }
     }
 

@@ -240,6 +240,61 @@
     let currentCaseId = null;
     let currentCaseData = null;
 
+    // Tambahkan di bagian atas script, setelah deklarasi variabel
+function validateBarcodeFormat(barcode, expectedType) {
+    const parts = barcode.split('#');
+    
+    if (expectedType === 'container') {
+        // Container should have 4 parts
+        if (parts.length !== 4) {
+            // Check if it's actually a box barcode (8 parts)
+            if (parts.length === 8) {
+                return {
+                    valid: false,
+                    message: 'This is a box barcode. Please scan the container barcode first, then scan box barcodes.'
+                };
+            }
+            return {
+                valid: false,
+                message: 'Invalid container barcode format. Expected 4 parts separated by #, got ' + parts.length + ' parts.'
+            };
+        }
+        
+        // Second part should not start with numbers only (to distinguish from box)
+        if (/^\d+/.test(parts[1])) {
+            return {
+                valid: false,
+                message: 'This appears to be a box barcode. Please scan the container barcode first.'
+            };
+        }
+    } else if (expectedType === 'box') {
+        // Box should have 8 parts
+        if (parts.length !== 8) {
+            // Check if it's actually a container barcode (4 parts)
+            if (parts.length === 4) {
+                return {
+                    valid: false,
+                    message: 'This is a container barcode. Please scan container barcode first, then scan box barcodes.'
+                };
+            }
+            return {
+                valid: false,
+                message: 'Invalid box barcode format. Expected 8 parts separated by #, got ' + parts.length + ' parts.'
+            };
+        }
+        
+        // Second part should start with numbers (part number)
+        if (!/^\d+/.test(parts[1])) {
+            return {
+                valid: false,
+                message: 'This appears to be a container barcode. Please scan a box barcode.'
+            };
+        }
+    }
+    
+    return { valid: true };
+}
+
     // Container barcode scanner
     document.getElementById('containerBarcode').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
@@ -249,17 +304,18 @@
 
     // Auto-enter for container barcode (trigger scan automatically after barcode input)
     document.getElementById('containerBarcode').addEventListener('input', function(e) {
-        const barcode = this.value;
-        // Auto-trigger scan if barcode length is sufficient (assuming barcode has minimum length)
-        if (barcode.length >= 20) {
-            // Small delay to ensure barcode is completely scanned
-            setTimeout(() => {
-                if (this.value === barcode) { // Check if value hasn't changed (barcode complete)
-                    scanContainer();
-                }
-            }, 100);
-        }
-    });
+    const barcode = this.value;
+    const parts = barcode.split('#');
+    
+    // Auto-trigger scan for container format (4 parts with #) or box format (8 parts with #)
+    if ((parts.length === 4 && barcode.length >= 25) || (parts.length === 8 && barcode.length >= 40)) {
+        setTimeout(() => {
+            if (this.value === barcode) {
+                scanContainer();
+            }
+        }, 100);
+    }
+});
 
     // Box barcode scanner
     document.getElementById('boxBarcode').addEventListener('keypress', function(e) {
@@ -270,17 +326,18 @@
 
     // Auto-enter for box barcode (trigger scan automatically after barcode input)
     document.getElementById('boxBarcode').addEventListener('input', function(e) {
-        const barcode = this.value;
-        // Auto-trigger scan if barcode contains '#' (indicates complete box barcode)
-        if (barcode.includes('#')) {
-            // Small delay to ensure barcode is completely scanned
-            setTimeout(() => {
-                if (this.value === barcode) { // Check if value hasn't changed (barcode complete)
-                    scanBox();
-                }
-            }, 100);
-        }
-    });
+    const barcode = this.value;
+    const parts = barcode.split('#');
+    
+    // Auto-trigger scan for box format (8 parts with #) or container format (4 parts with #)
+    if ((parts.length === 8 && barcode.length >= 40) || (parts.length === 4 && barcode.length >= 25)) {
+        setTimeout(() => {
+            if (this.value === barcode) {
+                scanBox();
+            }
+        }, 100);
+    }
+});
 
     // Ensure box barcode field maintains focus when box scanner is visible
     document.getElementById('boxBarcode').addEventListener('blur', function(e) {
@@ -363,6 +420,17 @@
             return;
         }
 
+        const validation = validateBarcodeFormat(barcode, 'container');
+    if (!validation.valid) {
+        showErrorToast(validation.message);
+        // Clear and refocus
+        setTimeout(() => {
+            document.getElementById('containerBarcode').value = '';
+            document.getElementById('containerBarcode').focus();
+        }, 3000);
+        return;
+    }
+
         $.ajax({
             url: '/api/casemark/scan-container',
             method: 'POST',
@@ -427,6 +495,17 @@
             showErrorToast('Please scan container first');
             return;
         }
+
+        const validation = validateBarcodeFormat(barcode, 'box');
+    if (!validation.valid) {
+        showErrorToast(validation.message);
+        // Clear and refocus
+        setTimeout(() => {
+            document.getElementById('boxBarcode').value = '';
+            document.getElementById('boxBarcode').focus();
+        }, 3000);
+        return;
+    }
 
         $.ajax({
             url: '/api/casemark/scan-box',
@@ -694,7 +773,7 @@
                     setTimeout(() => {
                         document.getElementById('finalBarcode').value = '';
                         document.getElementById('finalBarcode').focus();
-                    }, 3000);
+                    }, 1000);
                 }
             },
             error: function(xhr) {
@@ -705,7 +784,7 @@
                 setTimeout(() => {
                     document.getElementById('finalBarcode').value = '';
                     document.getElementById('finalBarcode').focus();
-                }, 3000);
+                }, 1000);
             }
         });
     }

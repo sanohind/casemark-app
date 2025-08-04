@@ -471,17 +471,25 @@ class CaseMarkApiController extends Controller
     {
         try {
             $barcode = $request->input('barcode');
-
+    
             if (!$barcode) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Barcode is required'
                 ], 400);
             }
-
+    
             // Clean barcode from any control characters
             $barcode = trim($barcode);
-            $barcode = preg_replace('/[\x00-\x1F\x7F]/', '', $barcode); // Remove control characters
+            $barcode = preg_replace('/[\x00-\x1F\x7F]/', '', $barcode);
+    
+            // TAMBAHKAN VALIDASI INI - Validate if this is actually a container barcode
+            if (!$this->isContainerBarcode($barcode)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid container barcode format. Please scan a container barcode, not a box barcode.'
+                ], 400);
+            }
 
             // Try multiple extraction methods
             $possibleCaseNumbers = [];
@@ -583,17 +591,25 @@ class CaseMarkApiController extends Controller
         try {
             $barcode = $request->input('barcode');
             $caseId = $request->input('case_id');
-
+    
             if (!$barcode || !$caseId) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Barcode and case_id are required'
                 ], 400);
             }
-
+    
             // Clean barcode from any control characters
             $barcode = trim($barcode);
-            $barcode = preg_replace('/[\x00-\x1F\x7F]/', '', $barcode); // Remove control characters
+            $barcode = preg_replace('/[\x00-\x1F\x7F]/', '', $barcode);
+    
+            // TAMBAHKAN VALIDASI INI - Validate if this is actually a box barcode
+            if (!$this->isBoxBarcode($barcode)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid box barcode format. Please scan a box barcode, not a container barcode.'
+                ], 400);
+            }
 
             // Parse box barcode: I2A-SAN-00432-SA#23901-BZ140-00-87#00020#001-060#0#20250615#0#1B
             $parts = explode('#', $barcode);
@@ -994,4 +1010,61 @@ class CaseMarkApiController extends Controller
             ], 500);
         }
     }
+
+    /**
+ * Validate if barcode is container format
+ */
+private function isContainerBarcode($barcode)
+{
+    // Container format: I2A-SAN-00432-SA#CR-06PG_40#20250615#1B
+    // Expected parts: 4 (case_no#part_info#date#status)
+    $parts = explode('#', $barcode);
+    
+    // Container barcode should have exactly 4 parts
+    if (count($parts) !== 4) {
+        return false;
+    }
+    
+    // Additional validation: second part should not be numeric (like part number)
+    // Container's second part is like "CR-06PG_40", box's second part is like "23901-BZ140-00-87"
+    $secondPart = $parts[1];
+    
+    // If second part starts with numbers only (like "23901"), it's likely a box barcode
+    if (preg_match('/^\d+/', $secondPart)) {
+        return false;
+    }
+    
+    return true;
+}
+
+/**
+ * Validate if barcode is box format
+ */
+private function isBoxBarcode($barcode)
+{
+    // Box format: I2A-SAN-00432-SA#23901-BZ140-00-87#00020#001-060#0#20250615#0#1B
+    // Expected parts: 8 (case_no#part_no#quantity#sequence#unknown#date#unknown#status)
+    $parts = explode('#', $barcode);
+    
+    // Box barcode should have exactly 8 parts
+    if (count($parts) !== 8) {
+        return false;
+    }
+    
+    // Additional validation: second part should start with numbers (part number)
+    $secondPart = $parts[1];
+    
+    // If second part starts with numbers (like "23901"), it's likely a box barcode
+    if (!preg_match('/^\d+/', $secondPart)) {
+        return false;
+    }
+    
+    // Third part should be numeric quantity
+    $thirdPart = $parts[2];
+    if (!is_numeric($thirdPart)) {
+        return false;
+    }
+    
+    return true;
+}
 }

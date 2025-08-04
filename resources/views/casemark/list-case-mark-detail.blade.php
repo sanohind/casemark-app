@@ -106,29 +106,6 @@
         @endif
     </div>
 
-    <!-- Action Buttons -->
-    @if($case->status == 'unpacked')
-    <div class="mb-8">
-        <div class="flex space-x-4">
-            <a href="{{ route('casemark.content-list', $case->case_no) }}" 
-               class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 flex items-center">
-                <i class="fas fa-qrcode mr-2"></i>
-                Start Scanning
-            </a>
-            @php
-                $scannedBoxes = $scanHistory->where('status', 'scanned')->count();
-            @endphp
-            @if($scannedBoxes > 0)
-            <button onclick="markAsPacked('{{ $case->case_no }}')"
-                    class="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 flex items-center">
-                <i class="fas fa-check mr-2"></i>
-                Mark as Packed
-            </button>
-            @endif
-        </div>
-    </div>
-    @endif
-
     <!-- Scan Progress Table -->
     <div class="mb-8">
         <h2 class="text-lg font-semibold text-gray-900 mb-4">Scan Progress</h2>
@@ -259,19 +236,6 @@
     </div>
 </div>
 
-<!-- Mark as Packed Modal -->
-<div id="packModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
-    <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-        <h3 class="text-lg font-medium text-gray-900 mb-4">Confirm Pack</h3>
-        <p class="text-sm text-gray-600 mb-6">Are you sure you want to mark this case as packed?</p>
-        <div class="flex justify-end space-x-4">
-            <button onclick="closeModal()" class="px-4 py-2 text-gray-600 hover:text-gray-800">Cancel</button>
-            <button onclick="confirmPack()" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
-                Confirm Pack
-            </button>
-        </div>
-    </div>
-</div>
 @endsection
 
 @section('scripts')
