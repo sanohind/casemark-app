@@ -40,14 +40,82 @@ class CaseMarkController extends Controller
     }
 
     // History Management  
-    public function history()
+    public function history(Request $request)
     {
-        // Ambil semua case yang statusnya packed dengan pagination
-        $cases = CaseModel::with(['contentLists', 'scanHistory'])
-            ->where('status', 'packed')
+        $query = CaseModel::with(['contentLists', 'scanHistory'])
+            ->where('status', 'packed');
+        
+        // Apply case no filter
+        if ($request->filled('case_no')) {
+            $query->where('case_no', $request->case_no);
+        }
+        
+        // Apply prod month filter
+        if ($request->filled('prod_month')) {
+            $query->where('prod_month', $request->prod_month);
+        }
+        
+        // Apply search filter
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('case_no', 'like', "%{$search}%")
+                  ->orWhere('prod_month', 'like', "%{$search}%")
+                  ->orWhereHas('contentLists', function($subQ) use ($search) {
+                      $subQ->where('part_no', 'like', "%{$search}%")
+                           ->orWhere('part_name', 'like', "%{$search}%");
+                  });
+            });
+        }
+        
+        $cases = $query->orderBy('packing_date', 'desc')->paginate(10);
+        
+        // Append current filters to pagination links
+        $cases->appends($request->only(['case_no', 'prod_month', 'search']));
+        
+        // Get all packed cases for filter options (not paginated)
+        $allPackedCases = CaseModel::where('status', 'packed')
+            ->select('case_no', 'prod_month')
             ->orderBy('packing_date', 'desc')
-            ->paginate(10);
-
+            ->get();
+        
+        // Get statistics from all packed cases (not paginated)
+        $allPackedCasesForStats = CaseModel::with(['contentLists', 'scanHistory'])
+            ->where('status', 'packed');
+        
+        // Apply same filters to statistics query
+        if ($request->filled('case_no')) {
+            $allPackedCasesForStats->where('case_no', $request->case_no);
+        }
+        
+        if ($request->filled('prod_month')) {
+            $allPackedCasesForStats->where('prod_month', $request->prod_month);
+        }
+        
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $allPackedCasesForStats->where(function($q) use ($search) {
+                $q->where('case_no', 'like', "%{$search}%")
+                  ->orWhere('prod_month', 'like', "%{$search}%")
+                  ->orWhereHas('contentLists', function($subQ) use ($search) {
+                      $subQ->where('part_no', 'like', "%{$search}%")
+                           ->orWhere('part_name', 'like', "%{$search}%");
+                  });
+            });
+        }
+        
+        $allPackedCasesForStats = $allPackedCasesForStats->get();
+        
+        // Calculate statistics
+        $packedCasesCount = $allPackedCasesForStats->count();
+        $totalBoxesCount = $allPackedCasesForStats->sum(function($case) { 
+            return $case->contentLists->count(); 
+        });
+        $totalQuantityCount = $allPackedCasesForStats->sum(function($case) { 
+            return $case->contentLists->sum('quantity'); 
+        });
+        $productionMonthsCount = $allPackedCasesForStats->unique('prod_month')->count();
+        
         // Hitung progress untuk setiap case
         foreach ($cases as $case) {
             $totalQty = $case->contentLists->sum('quantity');
@@ -55,7 +123,7 @@ class CaseMarkController extends Controller
             $case->progress = $totalQty > 0 ? $scannedQty . '/' . $totalQty : '0/0';
         }
 
-        return view('casemark.history', compact('cases'));
+        return view('casemark.history', compact('cases', 'allPackedCases', 'packedCasesCount', 'totalBoxesCount', 'totalQuantityCount', 'productionMonthsCount'));
     }
 
     public function historyDetail($caseNo)
@@ -161,13 +229,106 @@ class CaseMarkController extends Controller
     }
 
     // List Case Mark
-    public function listCaseMark()
+    public function listCaseMark(Request $request)
     {
-        $cases = CaseModel::with(['contentLists', 'scanHistory'])
-            ->orderBy('updated_at', 'desc')
-            ->paginate(10);
-
-        return view('casemark.list-case-mark', compact('cases'));
+        $query = CaseModel::with(['contentLists', 'scanHistory']);
+        
+        // Apply status filter
+        if ($request->filled('status')) {
+            $status = $request->status;
+            
+            if ($status === 'packed') {
+                $query->where('status', 'packed');
+            } elseif ($status === 'unpacked') {
+                // Cases that are not packed and have no scan history
+                $query->where('status', '!=', 'packed')
+                      ->whereDoesntHave('scanHistory');
+            } elseif ($status === 'in-progress') {
+                // Cases that are not packed but have scan history
+                $query->where('status', '!=', 'packed')
+                      ->whereHas('scanHistory');
+            }
+        }
+        
+        // Apply prod month filter
+        if ($request->filled('prod_month')) {
+            $query->where('prod_month', $request->prod_month);
+        }
+        
+        // Apply search filter
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('case_no', 'like', "%{$search}%")
+                  ->orWhere('prod_month', 'like', "%{$search}%")
+                  ->orWhereHas('contentLists', function($subQ) use ($search) {
+                      $subQ->where('part_no', 'like', "%{$search}%")
+                           ->orWhere('part_name', 'like', "%{$search}%");
+                  });
+            });
+        }
+        
+        $cases = $query->orderBy('updated_at', 'desc')->paginate(10);
+        
+        // Append current filters to pagination links
+        $cases->appends($request->only(['status', 'prod_month', 'search']));
+        
+        // Get statistics from all cases (not paginated)
+        $allCases = CaseModel::with(['contentLists', 'scanHistory']);
+        
+        // Apply same filters to statistics query
+        if ($request->filled('status')) {
+            $status = $request->status;
+            
+            if ($status === 'packed') {
+                $allCases->where('status', 'packed');
+            } elseif ($status === 'unpacked') {
+                $allCases->where('status', '!=', 'packed')
+                      ->whereDoesntHave('scanHistory');
+            } elseif ($status === 'in-progress') {
+                $allCases->where('status', '!=', 'packed')
+                      ->whereHas('scanHistory');
+            }
+        }
+        
+        if ($request->filled('prod_month')) {
+            $allCases->where('prod_month', $request->prod_month);
+        }
+        
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $allCases->where(function($q) use ($search) {
+                $q->where('case_no', 'like', "%{$search}%")
+                  ->orWhere('prod_month', 'like', "%{$search}%")
+                  ->orWhereHas('contentLists', function($subQ) use ($search) {
+                      $subQ->where('part_no', 'like', "%{$search}%")
+                           ->orWhere('part_name', 'like', "%{$search}%");
+                  });
+            });
+        }
+        
+        $allCases = $allCases->get();
+        
+        // Calculate statistics
+        $unpackedCount = 0;
+        $inProgressCount = 0;
+        $packedCount = 0;
+        
+        foreach($allCases as $case) {
+            if($case->status == 'packed') {
+                $packedCount++;
+            } else {
+                // Check if case has scan history (in progress)
+                $hasScanHistory = $case->scanHistory()->exists();
+                if($hasScanHistory) {
+                    $inProgressCount++;
+                } else {
+                    $unpackedCount++;
+                }
+            }
+        }
+        
+        return view('casemark.list-case-mark', compact('cases', 'unpackedCount', 'inProgressCount', 'packedCount'));
     }
 
 // List Case Mark Detail 

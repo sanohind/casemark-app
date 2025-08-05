@@ -7,47 +7,50 @@
     <!-- Header -->
     <div class="mb-6 flex justify-between items-center">
         <h1 class="text-2xl font-bold text-gray-900">LIST CASE MARK</h1>
+    </div>
 
-        <!-- Search -->
+    <!-- Search and Filters -->
+    <form method="GET" action="{{ route('casemark.list') }}" class="mb-6 flex items-center justify-between">
+        <!-- Filters -->
         <div class="flex items-center space-x-4">
+            <!-- Status Filter -->
             <div class="relative">
-                <input type="text" placeholder="Search..."
-                    class="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <i class="fas fa-search text-gray-400"></i>
+                <select name="status" id="statusFilter"
+                    class="appearance-none bg-blue-900 text-white px-4 py-2 pr-8 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">All Status</option>
+                    <option value="unpacked" {{ request('status') == 'unpacked' ? 'selected' : '' }}>Unpacked</option>
+                    <option value="in-progress" {{ request('status') == 'in-progress' ? 'selected' : '' }}>In Progress</option>
+                    <option value="packed" {{ request('status') == 'packed' ? 'selected' : '' }}>Packed</option>
+                </select>
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-white">
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+            </div>
+
+            <!-- Production Month Filter -->
+            <div class="relative">
+                <select name="prod_month" id="prodMonthFilter"
+                    class="appearance-none bg-blue-900 text-white px-4 py-2 pr-8 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">All Prod. Month</option>
+                    @foreach($cases->unique('prod_month') as $case)
+                    <option value="{{ $case->prod_month }}" {{ request('prod_month') == $case->prod_month ? 'selected' : '' }}>{{ $case->prod_month }}</option>
+                    @endforeach
+                </select>
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-white">
+                    <i class="fas fa-chevron-down"></i>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Filters -->
-    <div class="mb-6 flex space-x-4">
+        <!-- Search -->
         <div class="relative">
-            <select id="statusFilter"
-                class="appearance-none bg-blue-900 text-white px-4 py-2 pr-8 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option value="">All Status</option>
-                <option value="unpacked">Unpacked</option>
-                <option value="in-progress">In Progress</option>
-                <option value="packed">Packed</option>
-            </select>
-            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-white">
-                <i class="fas fa-chevron-down"></i>
+            <input type="text" name="search" placeholder="Search..." value="{{ request('search') }}"
+                class="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <i class="fas fa-search text-gray-400"></i>
             </div>
         </div>
-
-        <div class="relative">
-            <select id="prodMonthFilter"
-                class="appearance-none bg-blue-900 text-white px-4 py-2 pr-8 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option value="">All Prod. Month</option>
-                @foreach($cases->unique('prod_month') as $case)
-                <option value="{{ $case->prod_month }}">{{ $case->prod_month }}</option>
-                @endforeach
-            </select>
-            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-white">
-                <i class="fas fa-chevron-down"></i>
-            </div>
-        </div>
-    </div>
+    </form>
 
     <!-- Cases Table -->
     <div class="overflow-x-auto">
@@ -68,7 +71,11 @@
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
                 @forelse($cases as $index => $case)
-                <tr class="{{ $index % 2 == 0 ? 'bg-white' : 'bg-gray-50' }}" data-prod-month="{{ $case->prod_month }}">
+                @php
+                    $hasScanHistory = $case->scanHistory()->exists();
+                    $status = $case->status == 'packed' ? 'packed' : ($hasScanHistory ? 'in-progress' : 'unpacked');
+                @endphp
+                <tr class="{{ $index % 2 == 0 ? 'bg-white' : 'bg-gray-50' }}" data-prod-month="{{ $case->prod_month }}" data-status="{{ $status }}">
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $cases->firstItem() + $index }}.
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $case->case_no }}</td>
@@ -89,17 +96,16 @@
 
                         @else
                         @php
-                        $totalBoxes = $case->contentLists()->count();
-                        $scannedBoxes = $case->scanHistory()->distinct('box_no')->count();
+                        $hasScanHistory = $case->scanHistory()->exists();
                         @endphp
-                        @if($scannedBoxes == 0)
-                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
-                            Unpacked
-                        </span>
-                        @else
+                        @if($hasScanHistory)
                         <span
                             class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
                             In Progress
+                        </span>
+                        @else
+                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                            Unpacked
                         </span>
                         @endif
                         @endif
@@ -180,26 +186,6 @@
 
     <!-- Statistics -->
     <div class="mt-8 grid grid-cols-1 md:grid-cols-4 gap-4">
-        @php
-            $unpackedCount = 0;
-            $inProgressCount = 0;
-            $packedCount = 0;
-            
-            foreach($cases as $case) {
-                if($case->status == 'packed') {
-                    $packedCount++;
-                } else {
-                    $totalBoxes = $case->contentLists()->count();
-                    $scannedBoxes = $case->scanHistory()->distinct('box_no')->count();
-                    if($scannedBoxes > 0 && $scannedBoxes < $totalBoxes) {
-                        $inProgressCount++;
-                    } else {
-                        $unpackedCount++;
-                    }
-                }
-            }
-        @endphp
-        
         <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
             <div class="text-2xl font-bold text-blue-600">{{ $unpackedCount }}</div>
             <div class="text-sm text-blue-800">Unpacked Cases</div>
@@ -216,7 +202,7 @@
         </div>
 
         <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">
-            <div class="text-2xl font-bold text-gray-600">{{ $cases->count() }}</div>
+            <div class="text-2xl font-bold text-gray-600">{{ $unpackedCount + $inProgressCount + $packedCount }}</div>
             <div class="text-sm text-gray-800">Total Cases</div>
         </div>
     </div>
@@ -280,65 +266,25 @@
         closeModal();
     }
 
-    // Search functionality
-    document.querySelector('input[placeholder="Search..."]').addEventListener('input', function(e) {
-        const searchTerm = e.target.value.toLowerCase();
-        const rows = document.querySelectorAll('tbody tr');
-
-        rows.forEach(row => {
-            const text = row.textContent.toLowerCase();
-            if (text.includes(searchTerm)) {
-                row.style.display = '';
-            } else {
-                row.style.display = 'none';
-            }
-        });
+    // Auto-submit forms when filters change
+    document.getElementById('statusFilter').addEventListener('change', function() {
+        this.closest('form').submit();
     });
 
-    // Filter Status
-    const statusSelect = document.getElementById('statusFilter');
-    statusSelect.addEventListener('change', function(e) {
-        const status = e.target.value.toLowerCase();
-        const rows = document.querySelectorAll('tbody tr');
-        
-        rows.forEach(row => {
-            if (status === '') {
-                // Show all rows when "All Status" is selected
-                row.style.display = '';
-            } else {
-                // Get the status text from the status column (7th column)
-                const statusCell = row.querySelector('td:nth-child(7)');
-                if (statusCell) {
-                    const statusText = statusCell.textContent.toLowerCase().trim();
-                    
-                    if (status === 'unpacked' && statusText.includes('unpacked')) {
-                        row.style.display = '';
-                    } else if (status === 'in-progress' && statusText.includes('in progress')) {
-                        row.style.display = '';
-                    } else if (status === 'packed' && statusText.includes('packed')) {
-                        row.style.display = '';
-                    } else {
-                        row.style.display = 'none';
-                    }
-                } else {
-                    row.style.display = 'none';
-                }
-            }
-        });
+    document.getElementById('prodMonthFilter').addEventListener('change', function() {
+        this.closest('form').submit();
     });
-    // Filter Prod Month
-    const prodMonthSelect = document.getElementById('prodMonthFilter');
-    prodMonthSelect.addEventListener('change', function(e) {
-        const prodMonth = e.target.value;
-        const rows = document.querySelectorAll('tbody tr[data-prod-month]');
-        rows.forEach(row => {
-            if (prodMonth === '' || row.getAttribute('data-prod-month') === prodMonth) {
-                row.style.display = '';
-            } else {
-                row.style.display = 'none';
-            }
-        });
+
+    // Auto-submit search form with debounce
+    let searchTimeout;
+    document.querySelector('input[name="search"]').addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            this.closest('form').submit();
+        }, 500); // Submit after 500ms of no typing
     });
+
+
 
     // Auto-refresh every 60 seconds
     setInterval(function() {

@@ -7,47 +7,50 @@
     <!-- Header -->
     <div class="mb-6 flex justify-between items-center">
         <h1 class="text-2xl font-bold text-gray-900">CONTENT-LIST HISTORY</h1>
+    </div>
 
-        <!-- Search -->
+    <!-- Search and Filters -->
+    <form method="GET" action="{{ route('casemark.history') }}" class="mb-6 flex items-center justify-between">
+        <!-- Filters -->
         <div class="flex items-center space-x-4">
+            <!-- Case No Filter -->
             <div class="relative">
-                <input type="text" placeholder="Search..." id="searchInput"
-                    class="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <i class="fas fa-search text-gray-400"></i>
+                <select name="case_no" id="caseNoFilter"
+                    class="appearance-none bg-blue-900 text-white px-4 py-2 pr-8 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">All Case No</option>
+                    @foreach($allPackedCases->unique('case_no') as $case)
+                    <option value="{{ $case->case_no }}" {{ request('case_no') == $case->case_no ? 'selected' : '' }}>{{ $case->case_no }}</option>
+                    @endforeach
+                </select>
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-white">
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+            </div>
+
+            <!-- Production Month Filter -->
+            <div class="relative">
+                <select name="prod_month" id="prodMonthFilter"
+                    class="appearance-none bg-blue-900 text-white px-4 py-2 pr-8 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">All Prod. Month</option>
+                    @foreach($allPackedCases->unique('prod_month') as $case)
+                    <option value="{{ $case->prod_month }}" {{ request('prod_month') == $case->prod_month ? 'selected' : '' }}>{{ $case->prod_month }}</option>
+                    @endforeach
+                </select>
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-white">
+                    <i class="fas fa-chevron-down"></i>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Filters -->
-    <div class="mb-6 flex space-x-4">
+        <!-- Search -->
         <div class="relative">
-            <select id="caseNoFilter"
-                class="appearance-none bg-blue-900 text-white px-4 py-2 pr-8 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option value="">All Case No</option>
-                @foreach($cases->unique('case_no') as $case)
-                <option value="{{ $case->case_no }}">{{ $case->case_no }}</option>
-                @endforeach
-            </select>
-            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-white">
-                <i class="fas fa-chevron-down"></i>
+            <input type="text" name="search" placeholder="Search..." value="{{ request('search') }}"
+                class="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <i class="fas fa-search text-gray-400"></i>
             </div>
         </div>
-
-        <div class="relative">
-            <select id="prodMonthFilter"
-                class="appearance-none bg-blue-900 text-white px-4 py-2 pr-8 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option value="">All Prod. Month</option>
-                @foreach($cases->unique('prod_month') as $case)
-                <option value="{{ $case->prod_month }}">{{ $case->prod_month }}</option>
-                @endforeach
-            </select>
-            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-white">
-                <i class="fas fa-chevron-down"></i>
-            </div>
-        </div>
-    </div>
+    </form>
 
     <!-- Cases Table -->
     <div class="overflow-x-auto">
@@ -155,22 +158,22 @@
     <!-- Summary Statistics -->
     <div class="mt-8 grid grid-cols-1 md:grid-cols-4 gap-4">
         <div class="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
-            <div class="text-2xl font-bold text-green-600">{{ $cases->count() }}</div>
+            <div class="text-2xl font-bold text-green-600">{{ $packedCasesCount }}</div>
             <div class="text-sm text-green-800">Packed Cases</div>
         </div>
 
         <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
-            <div class="text-2xl font-bold text-blue-600">{{ $cases->sum(function($case) { return $case->contentLists->count(); }) }}</div>
+            <div class="text-2xl font-bold text-blue-600">{{ $totalBoxesCount }}</div>
             <div class="text-sm text-blue-800">Total Boxes</div>
         </div>
 
         <div class="bg-purple-50 border border-purple-200 rounded-lg p-4 text-center">
-            <div class="text-2xl font-bold text-purple-600">{{ $cases->sum(function($case) { return $case->contentLists->sum('quantity'); }) }}</div>
+            <div class="text-2xl font-bold text-purple-600">{{ $totalQuantityCount }}</div>
             <div class="text-sm text-purple-800">Total Quantity</div>
         </div>
 
         <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">
-            <div class="text-2xl font-bold text-gray-600">{{ $cases->unique('prod_month')->count() }}</div>
+            <div class="text-2xl font-bold text-gray-600">{{ $productionMonthsCount }}</div>
             <div class="text-sm text-gray-800">Production Months</div>
         </div>
     </div>
@@ -179,45 +182,29 @@
 
 @section('scripts')
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Search functionality
-        const searchInput = document.getElementById('searchInput');
-        const caseNoFilter = document.getElementById('caseNoFilter');
-        const prodMonthFilter = document.getElementById('prodMonthFilter');
-
-        function filterTable() {
-            const searchTerm = searchInput.value.toLowerCase();
-            const selectedCaseNo = caseNoFilter.value;
-            const selectedProdMonth = prodMonthFilter.value;
-            const rows = document.querySelectorAll('tbody tr[data-case-no]');
-
-            rows.forEach(row => {
-                const caseNo = row.getAttribute('data-case-no');
-                const prodMonth = row.getAttribute('data-prod-month');
-                const text = row.textContent.toLowerCase();
-
-                const matchesSearch = searchTerm === '' || text.includes(searchTerm);
-                const matchesCaseNo = selectedCaseNo === '' || caseNo === selectedCaseNo;
-                const matchesProdMonth = selectedProdMonth === '' || prodMonth === selectedProdMonth;
-
-                if (matchesSearch && matchesCaseNo && matchesProdMonth) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-        }
-
-        searchInput.addEventListener('input', filterTable);
-        caseNoFilter.addEventListener('change', filterTable);
-        prodMonthFilter.addEventListener('change', filterTable);
-
-        // Auto-refresh every 60 seconds
-        setInterval(function() {
-            if (!document.hidden) {
-                location.reload();
-            }
-        }, 60000);
+    // Auto-submit forms when filters change
+    document.getElementById('caseNoFilter').addEventListener('change', function() {
+        this.closest('form').submit();
     });
+
+    document.getElementById('prodMonthFilter').addEventListener('change', function() {
+        this.closest('form').submit();
+    });
+
+    // Auto-submit search form with debounce
+    let searchTimeout;
+    document.querySelector('input[name="search"]').addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            this.closest('form').submit();
+        }, 500); // Submit after 500ms of no typing
+    });
+
+    // Auto-refresh every 60 seconds
+    setInterval(function() {
+        if (!document.hidden) {
+            location.reload();
+        }
+    }, 60000);
 </script>
 @endsection
