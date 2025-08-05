@@ -239,14 +239,24 @@
 <div id="errorToast"
     class="fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg transform translate-x-full transition-transform duration-300 z-50"
     style="display: none;">
-    <div class="flex items-center">
-        <i class="fas fa-exclamation-triangle mr-3"></i>
-        <div>
-            <h4 class="font-semibold">Error!</h4>
-            <p class="text-sm opacity-90" id="errorToastMessage">An error occurred.</p>
+    <div class="flex items-center justify-between">
+        <div class="flex items-center">
+            <i class="fas fa-exclamation-triangle mr-3"></i>
+            <div>
+                <h4 class="font-semibold">Error!</h4>
+                <p class="text-sm opacity-90" id="errorToastMessage">An error occurred.</p>
+            </div>
         </div>
+        <button onclick="closeErrorToast()" class="ml-4 text-white hover:text-gray-200 transition-colors duration-200">
+            <i class="fas fa-times text-xs"></i>
+        </button>
     </div>
 </div>
+
+<!-- Audio element for error sound -->
+<audio id="errorAudio" preload="auto">
+    <source src="{{ asset('wrong-buzzer.mp3') }}" type="audio/mpeg">
+</audio>
 @endsection
 
 @section('scripts')
@@ -869,6 +879,8 @@ function hideSuccessToast() {
 
 function showErrorToast(message, autoClearInput = true) {
     const toast = document.getElementById('errorToast');
+    const audio = document.getElementById('errorAudio');
+    
     if (toast) {
         document.getElementById('errorToastMessage').textContent = message;
 
@@ -879,7 +891,19 @@ function showErrorToast(message, autoClearInput = true) {
             toast.classList.add('translate-x-0');
         }, 10);
 
-        // Auto hide after 3 seconds
+        // Play error audio for 6 seconds
+        if (audio) {
+            audio.currentTime = 0; // Reset audio to beginning
+            audio.play().catch(e => console.log('Audio play failed:', e));
+            
+            // Stop audio after 6 seconds
+            setTimeout(() => {
+                audio.pause();
+                audio.currentTime = 0;
+            }, 6000);
+        }
+
+        // Auto hide after 6 seconds (matching audio duration)
         setTimeout(() => {
             hideErrorToast();
 
@@ -899,21 +923,33 @@ function showErrorToast(message, autoClearInput = true) {
                     }
                 }
             }
-        }, 3000);
+        }, 6000);
     }
 }
 
 function hideErrorToast() {
     const toast = document.getElementById('errorToast');
+    const audio = document.getElementById('errorAudio');
+    
     if (toast) {
         toast.classList.remove('translate-x-0');
         toast.classList.add('translate-x-full');
+
+        // Stop audio if playing
+        if (audio) {
+            audio.pause();
+            audio.currentTime = 0;
+        }
 
         // Hide completely after animation
         setTimeout(() => {
             toast.style.display = 'none';
         }, 300);
     }
+}
+
+function closeErrorToast() {
+    hideErrorToast();
 }
 
 function resetForm() {
