@@ -11,20 +11,15 @@
 
     <!-- Container Scanner Section -->
     <div id="containerScanner" class="mb-2">
-        <div class="bg-white rounded-lg shadow p-4">
-            <!-- p-4 lebih kecil dari p-6 -->
-            <!-- <h2 class="text-base font-semibold text-gray-900 mb-3">Scan Container Barcode</h2> -->
+        <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
             <div class="mb-3">
-                <!-- <label for="containerBarcode" class="block text-xs font-medium text-gray-700 mb-1">
-                    Container Barcode
-                </label> -->
                 <input type="text" id="containerBarcode"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-base font-mono"
-                    placeholder="Scan container qr code to load case data..." autofocus>
+                    class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#0A2856] focus:border-[#0A2856] transition text-base"
+                    placeholder="Scan container QR code to load case data..." autofocus>
             </div>
             <button type="button" onclick="scanContainer()"
-                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium flex items-center text-xs">
-                <i class="fas fa-qrcode mr-2"></i>
+                class="bg-[#0A2856] hover:bg-[#0A2856]/90 text-white px-4 py-2 rounded font-medium flex items-center gap-2 transition text-sm">
+                <i class="fas fa-qrcode"></i>
                 Scan Container
             </button>
         </div>
@@ -32,19 +27,15 @@
 
     <!-- Box Scanner Section (Hidden initially) -->
     <div id="boxScanner" class="mb-2 hidden">
-        <div class="bg-white rounded-lg shadow p-4">
-            <!-- <h2 class="text-base font-semibold text-gray-900 mb-3">Scan Box Barcode</h2> -->
+        <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
             <div class="mb-3">
-                <!-- <label for="boxBarcode" class="block text-xs font-medium text-gray-700 mb-1">
-                    Box Barcode
-                </label> -->
                 <input type="text" id="boxBarcode"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-base font-mono"
-                    placeholder="Scan box qr code...">
+                    class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#0A2856] focus:border-[#0A2856] transition text-base"
+                    placeholder="Scan box QR code...">
             </div>
             <button type="button" onclick="scanBox()"
-                class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md font-medium flex items-center text-xs">
-                <i class="fas fa-barcode mr-2"></i>
+                class="bg-[#0A2856] hover:bg-[#0A2856]/90 text-white px-4 py-2 rounded font-medium flex items-center gap-2 transition text-sm">
+                <i class="fas fa-barcode"></i>
                 Scan Box
             </button>
         </div>
@@ -72,48 +63,47 @@
     </div> -->
 
     <!-- Case Information Section (Hidden initially) -->
-    <div id="caseInfo" class="mb-2 hidden">
-        <div class="bg-white rounded-lg shadow p-6">
-            <h2 class="text-lg font-semibold text-gray-900 mb-2">Case Information</h2>
+    <div id="caseInfo" class="mb-4 hidden">
+        <div class="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Case Information</h2>
             <div class="grid grid-cols-2 gap-4">
-                <div class="space-y-2">
+                <div class="space-y-3">
                     <div class="flex">
-                        <span class="font-semibold w-32">Destination</span>
-                        <span class="mr-4">:</span>
-                        <span id="destination">-</span>
+                        <span class="font-semibold w-32 text-[#0A2856]">Destination</span>
+                        <span class="mr-4 text-gray-500">:</span>
+                        <span id="destination" class="text-gray-900">-</span>
                     </div>
                     <div class="flex">
-                        <span class="font-semibold w-32">Order No.</span>
-                        <span class="mr-4">:</span>
-                        <span id="orderNo">-</span>
+                        <span class="font-semibold w-32 text-[#0A2856]">Order No.</span>
+                        <span class="mr-4 text-gray-500">:</span>
+                        <span id="orderNo" class="text-gray-900">-</span>
                     </div>
-
                 </div>
-                <div class="space-y-2">
+                <div class="space-y-3">
                     <div class="flex">
-                        <span class="font-semibold w-32">Case No.</span>
-                        <span class="mr-4">:</span>
-                        <span id="caseNo">-</span>
+                        <span class="font-semibold w-32 text-[#0A2856]">Case No.</span>
+                        <span class="mr-4 text-gray-500">:</span>
+                        <span id="caseNo" class="text-gray-900">-</span>
                     </div>
                     <div class="flex">
-                        <span class="font-semibold w-32">Prod Month</span>
-                        <span class="mr-4">:</span>
-                        <span id="prodMonth">-</span>
+                        <span class="font-semibold w-32 text-[#0A2856]">Prod Month</span>
+                        <span class="mr-4 text-gray-500">:</span>
+                        <span id="prodMonth" class="text-gray-900">-</span>
                     </div>
                     <div class="flex hidden">
-                        <span class="font-semibold w-32">C/SIZE (CM)</span>
-                        <span class="mr-4">:</span>
-                        <span id="caseSize">-</span>
+                        <span class="font-semibold w-32 text-[#0A2856]">C/SIZE (CM)</span>
+                        <span class="mr-4 text-gray-500">:</span>
+                        <span id="caseSize" class="text-gray-900">-</span>
                     </div>
                     <div class="flex hidden">
-                        <span class="font-semibold w-32">G/W</span>
-                        <span class="mr-4">:</span>
-                        <span id="grossWeight">-</span>
+                        <span class="font-semibold w-32 text-[#0A2856]">G/W</span>
+                        <span class="mr-4 text-gray-500">:</span>
+                        <span id="grossWeight" class="text-gray-900">-</span>
                     </div>
                     <div class="flex hidden">
-                        <span class="font-semibold w-32">N/W</span>
-                        <span class="mr-4">:</span>
-                        <span id="netWeight">-</span>
+                        <span class="font-semibold w-32 text-[#0A2856]">N/W</span>
+                        <span class="mr-4 text-gray-500">:</span>
+                        <span id="netWeight" class="text-gray-900">-</span>
                     </div>
                 </div>
             </div>
@@ -121,11 +111,11 @@
     </div>
 
     <!-- Scan Progress Table -->
-    <div class="mb-2">
-        <h2 class="text-lg font-semibold text-gray-900 mb-2">Scan Progress</h2>
+    <div class="mb-4">
+        <h2 class="text-lg font-semibold text-gray-900 mb-3">Scan Progress</h2>
         <div class="overflow-x-auto">
-            <table id="scanProgressTable" class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-blue-900">
+            <table id="scanProgressTable" class="min-w-full divide-y divide-gray-200 border border-gray-200 rounded-lg">
+                <thead class="bg-[#0A2856]">
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">No.</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Part No.
@@ -150,11 +140,11 @@
     </div>
 
     <!-- Details Table -->
-    <div class="mb-2">
-        <h2 class="text-lg font-semibold text-gray-900 mb-2">Details</h2>
+    <div class="mb-4">
+        <h2 class="text-lg font-semibold text-gray-900 mb-3">Details</h2>
         <div class="overflow-x-auto">
-            <table id="detailsTable" class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-blue-900">
+            <table id="detailsTable" class="min-w-full divide-y divide-gray-200 border border-gray-200 rounded-lg">
+                <thead class="bg-[#0A2856]">
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">No.</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Box No.
@@ -182,38 +172,38 @@
     <!-- Submit Button (Hidden initially) -->
     <!-- Submit Section (Updated) - Ganti bagian Submit Button dengan ini -->
     <div id="submitContainer" class="mt-8 text-center hidden">
-        <div class="bg-green-50 border border-green-200 rounded-lg p-6">
-            <div class="flex items-center justify-center mb-2">
-                <i class="fas fa-check-circle text-green-500 text-3xl mr-3"></i>
-                <h3 class="text-lg font-semibold text-green-900">All Items Scanned!</h3>
+        <div class="bg-white border border-gray-200 rounded-lg p-6 shadow-sm max-w-2xl mx-auto">
+            <div class="flex items-center justify-center mb-4">
+                <i class="fas fa-check-circle text-[#0A2856] text-2xl mr-3"></i>
+                <h3 class="text-lg font-semibold text-[#0A2856]">All Items Scanned!</h3>
             </div>
-            <p class="text-green-700 mb-6">All items have been successfully scanned. Choose your submit method:</p>
+            <p class="text-gray-600 mb-6">All items have been successfully scanned. Choose your submit method:</p>
 
             <!-- Submit Options -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <!-- Manual Submit Button -->
-                <div class="bg-white border border-green-200 rounded-lg p-4">
-                    <h4 class="font-semibold text-green-900 mb-2">Manual Submit</h4>
-                    <p class="text-sm text-gray-600 mb-2">Click the button below to submit this case manually.</p>
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                    <h4 class="font-semibold text-[#0A2856] mb-2">Manual Submit</h4>
+                    <p class="text-sm text-gray-600 mb-3">Click the button below to submit this case manually.</p>
                     <button type="button" onclick="submitCase()"
-                        class="w-full bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-md font-medium">
-                        <i class="fas fa-check mr-2"></i>
+                        class="w-full bg-[#0A2856] hover:bg-[#0A2856]/90 text-white px-4 py-2 rounded font-medium flex items-center justify-center gap-2 transition">
+                        <i class="fas fa-check"></i>
                         Submit Case
                     </button>
                 </div>
 
                 <!-- Final Barcode Submit -->
-                <div class="bg-white border border-blue-200 rounded-lg p-4">
-                    <h4 class="font-semibold text-blue-900 mb-2">Final Barcode Submit</h4>
-                    <p class="text-sm text-gray-600 mb-2">Scan the final barcode to submit this case automatically.</p>
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                    <h4 class="font-semibold text-[#0A2856] mb-2">Final Barcode Submit</h4>
+                    <p class="text-sm text-gray-600 mb-3">Scan the final barcode to submit this case automatically.</p>
                     <div class="mb-3">
                         <input type="text" id="finalBarcode"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-mono"
+                            class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#0A2856] focus:border-[#0A2856] transition text-sm"
                             placeholder="Scan final barcode...">
                     </div>
                     <button type="button" onclick="scanFinalBarcode()"
-                        class="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-md font-medium">
-                        <i class="fas fa-qrcode mr-2"></i>
+                        class="w-full bg-[#0A2856] hover:bg-[#0A2856]/90 text-white px-4 py-2 rounded font-medium flex items-center justify-center gap-2 transition">
+                        <i class="fas fa-qrcode"></i>
                         Scan Final Barcode
                     </button>
                 </div>
@@ -224,7 +214,7 @@
 
 <!-- Success Notification Toast -->
 <div id="successToast"
-    class="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg transform translate-x-full transition-transform duration-300 z-50"
+    class="fixed top-4 right-4 bg-[#0A2856] text-white px-6 py-3 rounded-lg shadow-sm transform translate-x-full transition-transform duration-300 z-50"
     style="display: none;">
     <div class="flex items-center">
         <i class="fas fa-check-circle mr-3"></i>
@@ -237,7 +227,7 @@
 
 <!-- Error Notification Toast -->
 <div id="errorToast"
-    class="fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg transform translate-x-full transition-transform duration-300 z-50"
+    class="fixed top-4 right-4 bg-red-600 text-white px-6 py-3 rounded-lg shadow-sm transform translate-x-full transition-transform duration-300 z-50"
     style="display: none;">
     <div class="flex items-center justify-between">
         <div class="flex items-center">

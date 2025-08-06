@@ -16,7 +16,7 @@
             <!-- Status Filter -->
             <div class="relative">
                 <select name="status" id="statusFilter"
-                    class="appearance-none bg-blue-900 text-white px-4 py-2 pr-8 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    class="appearance-none bg-[#0A2856] text-white px-4 py-2 pr-8 rounded focus:outline-none focus:ring-2 focus:ring-[#0A2856]">
                     <option value="">All Status</option>
                     <option value="unpacked" {{ request('status') == 'unpacked' ? 'selected' : '' }}>Unpacked</option>
                     <option value="in-progress" {{ request('status') == 'in-progress' ? 'selected' : '' }}>In Progress</option>
@@ -30,7 +30,7 @@
             <!-- Production Month Filter -->
             <div class="relative">
                 <select name="prod_month" id="prodMonthFilter"
-                    class="appearance-none bg-blue-900 text-white px-4 py-2 pr-8 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    class="appearance-none bg-[#0A2856] text-white px-4 py-2 pr-8 rounded focus:outline-none focus:ring-2 focus:ring-[#0A2856]">
                     <option value="">All Prod. Month</option>
                     @foreach($cases->unique('prod_month') as $case)
                     <option value="{{ $case->prod_month }}" {{ request('prod_month') == $case->prod_month ? 'selected' : '' }}>{{ $case->prod_month }}</option>
@@ -55,7 +55,7 @@
     <!-- Cases Table -->
     <div class="overflow-x-auto">
         <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-blue-900">
+            <thead class="bg-[#0A2856]">
                 <tr>
                     <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">No.</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Case No</th>
@@ -113,7 +113,7 @@
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div class="flex space-x-2">
                             <a href="{{ route('casemark.list.detail', $case->case_no) }}"
-                                class="text-blue-600 hover:text-blue-900">
+                                class="text-[#0A2856] hover:text-[#0A2856]/80">
                                 Detail
                             </a>
                         </div>
@@ -127,7 +127,7 @@
                             <p class="text-lg">No cases found</p>
                             <p class="text-sm">Upload a content list to get started</p>
                             <a href="{{ route('casemark.upload') }}"
-                                class="mt-4 inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                                class="mt-4 inline-flex items-center px-4 py-2 bg-[#0A2856] text-white rounded-md hover:bg-[#0A2856]/90">
                                 <i class="fas fa-upload mr-2"></i>
                                 Upload Content List
                             </a>
@@ -186,9 +186,9 @@
 
     <!-- Statistics -->
     <div class="mt-8 grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
-            <div class="text-2xl font-bold text-blue-600">{{ $unpackedCount }}</div>
-            <div class="text-sm text-blue-800">Unpacked Cases</div>
+        <div class="bg-red-100 border border-red-200 rounded-lg p-4 text-center">
+            <div class="text-2xl font-bold text-red-600">{{ $unpackedCount }}</div>
+            <div class="text-sm text-red-800">Unpacked Cases</div>
         </div>
 
         <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">

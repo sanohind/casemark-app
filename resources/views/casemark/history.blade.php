@@ -16,7 +16,7 @@
             <!-- Case No Filter -->
             <div class="relative">
                 <select name="case_no" id="caseNoFilter"
-                    class="appearance-none bg-blue-900 text-white px-4 py-2 pr-8 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    class="appearance-none bg-[#0A2856] text-white px-4 py-2 pr-8 rounded focus:outline-none focus:ring-2 focus:ring-[#0A2856]">
                     <option value="">All Case No</option>
                     @foreach($allPackedCases->unique('case_no') as $case)
                     <option value="{{ $case->case_no }}" {{ request('case_no') == $case->case_no ? 'selected' : '' }}>{{ $case->case_no }}</option>
@@ -30,7 +30,7 @@
             <!-- Production Month Filter -->
             <div class="relative">
                 <select name="prod_month" id="prodMonthFilter"
-                    class="appearance-none bg-blue-900 text-white px-4 py-2 pr-8 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    class="appearance-none bg-[#0A2856] text-white px-4 py-2 pr-8 rounded focus:outline-none focus:ring-2 focus:ring-[#0A2856]">
                     <option value="">All Prod. Month</option>
                     @foreach($allPackedCases->unique('prod_month') as $case)
                     <option value="{{ $case->prod_month }}" {{ request('prod_month') == $case->prod_month ? 'selected' : '' }}>{{ $case->prod_month }}</option>
@@ -55,7 +55,7 @@
     <!-- Cases Table -->
     <div class="overflow-x-auto">
         <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-blue-900">
+            <thead class="bg-[#0A2856]">
                 <tr>
                     <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">No.</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Case No</th>
@@ -91,7 +91,7 @@
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <a href="{{ route('casemark.history.detail', $case->case_no) }}"
-                            class="text-blue-600 hover:text-blue-900">
+                            class="text-[#0A2856] hover:text-[#0A2856]/80">
                             Detail
                         </a>
                     </td>

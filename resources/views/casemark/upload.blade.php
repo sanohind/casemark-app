@@ -62,7 +62,7 @@
                 <div class="mb-4">
                     <label for="excel_file" class="cursor-pointer">
                         <span
-                            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md inline-flex items-center">
+                            class="bg-[#0A2856] hover:bg-[#0A2856]/90 text-white px-4 py-2 rounded-md inline-flex items-center">
                             <i class="fas fa-file-excel mr-2"></i>
                             Choose Excel File
                         </span>
@@ -191,7 +191,7 @@
 
         <!-- Excel Format Guide -->
         <div class="mb-8 bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <h3 class="text-sm font-medium text-blue-900 mb-2">Excel Format Requirements:</h3>
+            <h3 class="text-sm font-medium text-[#0A2856] mb-2">Excel Format Requirements:</h3>
             <div class="text-sm text-blue-800">
                 <p class="mb-2">Ensure your Excel file contains the following columns:</p>
                 <div class="grid grid-cols-2 gap-4">
@@ -215,7 +215,7 @@
                 Cancel
             </a>
             <button type="submit" id="uploadBtn"
-                class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed">
+                class="px-6 py-2 bg-[#0A2856] text-white rounded-md hover:bg-[#0A2856]/90 focus:outline-none focus:ring-2 focus:ring-[#0A2856] disabled:opacity-50 disabled:cursor-not-allowed">
                 <span id="uploadText">Upload & Process</span>
                 <span id="uploadLoading" class="hidden">
                     <i class="fas fa-spinner fa-spin mr-2"></i>

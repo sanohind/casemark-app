@@ -119,6 +119,16 @@
     .hamburger.active .hamburger-line:nth-child(3) {
         transform: rotate(-45deg) translate(7px, -6px);
     }
+    .sanoh-darkblue {
+        background-color: #0A2856 !important;
+        color: #fff !important;
+    }
+    .sanoh-darkblue-text {
+        color: #0A2856 !important;
+    }
+    .sanoh-darkblue-border {
+        border-color: #0A2856 !important;
+    }
     </style>
 </head>
 
@@ -185,28 +195,28 @@
             <nav class="space-y-1 p-4">
                 <a href="{{ route('casemark.content-list') }}"
                     class="flex items-center px-4 py-2 text-sm font-medium rounded-md 
-                          {{ request()->routeIs('casemark.content-list') ? 'bg-blue-900 text-white' : 'text-gray-700 hover:bg-gray-50' }}">
+                          {{ request()->routeIs('casemark.content-list') ? 'bg-[#0A2856] text-white' : 'text-gray-700 hover:bg-gray-50' }}">
                     <i class="fas fa-list mr-3"></i>
                     CASE MARK
                 </a>
 
                 <a href="{{ route('casemark.history') }}"
                     class="flex items-center px-4 py-2 text-sm font-medium rounded-md
-                          {{ request()->routeIs('casemark.history') ? 'bg-blue-900 text-white' : 'text-gray-700 hover:bg-gray-50' }}">
+                          {{ request()->routeIs('casemark.history') ? 'bg-[#0A2856] text-white' : 'text-gray-700 hover:bg-gray-50' }}">
                     <i class="fas fa-history mr-3"></i>
                     HISTORY
                 </a>
 
                 <a href="{{ route('casemark.upload') }}"
                     class="flex items-center px-4 py-2 text-sm font-medium rounded-md
-                          {{ request()->routeIs('casemark.upload') ? 'bg-blue-900 text-white' : 'text-gray-700 hover:bg-gray-50' }}">
+                          {{ request()->routeIs('casemark.upload') ? 'bg-[#0A2856] text-white' : 'text-gray-700 hover:bg-gray-50' }}">
                     <i class="fas fa-upload mr-3"></i>
                     UPLOAD
                 </a>
 
                 <a href="{{ route('casemark.list') }}"
                     class="flex items-center px-4 py-2 text-sm font-medium rounded-md
-                          {{ request()->routeIs('casemark.list') ? 'bg-blue-900 text-white' : 'text-gray-700 hover:bg-gray-50' }}">
+                          {{ request()->routeIs('casemark.list') ? 'bg-[#0A2856] text-white' : 'text-gray-700 hover:bg-gray-50' }}">
                     <i class="fas fa-clipboard-list mr-3"></i>
                     LIST CASE MARK
                 </a>

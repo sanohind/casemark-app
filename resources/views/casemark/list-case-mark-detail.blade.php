@@ -7,7 +7,7 @@
     <!-- Header -->
     <div class="mb-6">
         <div class="flex items-center space-x-4 mb-4">
-            <a href="{{ route('casemark.list') }}" class="text-blue-600 hover:text-blue-900">
+            <a href="{{ route('casemark.list') }}" class="text-[#0A2856] hover:text-[#0A2856]/80">
                 <i class="fas fa-arrow-left mr-2"></i>Back to List Case Mark
             </a>
         </div>
@@ -111,7 +111,7 @@
         <h2 class="text-lg font-semibold text-gray-900 mb-4">Scan Progress</h2>
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-blue-900">
+                <thead class="bg-[#0A2856]">
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">No.</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Part No.</th>
@@ -156,7 +156,7 @@
         <h2 class="text-lg font-semibold text-gray-900 mb-4">Details</h2>
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-blue-900">
+                <thead class="bg-[#0A2856]">
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">No.</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Box No.</th>
