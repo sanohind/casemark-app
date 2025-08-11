@@ -46,28 +46,46 @@ class CaseMarkApiController extends Controller
                 ]);
             }
 
-            // Check if already scanned
-            $existingScan = ScanHistory::where('case_no', $case->case_no)
-                ->where('box_no', $boxData['box_no'])
-                ->where('part_no', $boxData['part_no'])
-                ->first();
+            // Use transaction with lock to prevent race condition
+            $scanRecord = null;
+            $errorMessage = null;
 
-            if ($existingScan) {
+            DB::transaction(function () use ($case, $boxData, $contentList, &$scanRecord, &$errorMessage) {
+                $existingScan = ScanHistory::where('case_no', $case->case_no)
+                    ->where('box_no', $boxData['box_no'])
+                    ->where('part_no', $boxData['part_no'])
+                    ->lockForUpdate()
+                    ->first();
+
+                if ($existingScan) {
+                    $errorMessage = 'Box ' . $boxData['box_no'] . ' has already been scanned on ' . $existingScan->scanned_at->format('d/m/Y H:i');
+                    return;
+                }
+
+                // Record scan
+                $scanRecord = ScanHistory::create([
+                    'case_no' => $case->case_no,
+                    'box_no' => $boxData['box_no'],
+                    'part_no' => $boxData['part_no'],
+                    'scanned_qty' => $contentList->quantity,
+                    'total_qty' => $contentList->quantity,
+                    'status' => 'scanned'
+                ]);
+            });
+
+            if ($errorMessage) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Box ' . $boxData['box_no'] . ' has already been scanned on ' . $existingScan->scanned_at->format('d/m/Y H:i')
+                    'message' => $errorMessage
                 ]);
             }
 
-            // Record scan
-            $scanRecord = ScanHistory::create([
-                'case_no' => $case->case_no,
-                'box_no' => $boxData['box_no'],
-                'part_no' => $boxData['part_no'],
-                'scanned_qty' => $contentList->quantity,
-                'total_qty' => $contentList->quantity,
-                'status' => 'scanned'
-            ]);
+            if (!$scanRecord) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to record scan. Please try again.'
+                ], 500);
+            }
 
             return response()->json([
                 'success' => true,
@@ -202,7 +220,7 @@ class CaseMarkApiController extends Controller
             $row25 = array_map('trim', $data[$startRow + 6] ?? []); // Row 25
 
             // Debug: Show row contents for troubleshooting
-            \Log::info('Excel Data Debug', [
+            Log::info('Excel Data Debug', [
                 'row19' => $row19,
                 'row20' => $row20,
                 'row21' => $row21,
@@ -555,7 +573,7 @@ class CaseMarkApiController extends Controller
 
                 return response()->json([
                     'success' => false,
-                    'message' => 'Case not found: ' . $caseNo . ' (Available: ' . implode(', ', $caseNumbers) . ')'
+                    'message' => 'Case not found: ' . $caseNo . '. Please check the barcode and try again.', 
                 ], 404);
             }
 
@@ -680,18 +698,6 @@ class CaseMarkApiController extends Controller
                 ], 400);
             }
 
-            // Check if box with this sequence already scanned
-            $existingScan = ScanHistory::where('case_no', $case->case_no)
-                ->where('seq', $sequence)
-                ->first();
-
-            if ($existingScan) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Box with sequence ' . $sequence . ' has already been scanned'
-                ], 409);
-            }
-
             // Calculate total quantity
             $totalQty = $quantity * (int) $totalSequence;
 
@@ -699,16 +705,39 @@ class CaseMarkApiController extends Controller
             $sequenceInt = (int) $sequence; // Convert "002" to 2
             $boxNo = 'BOX_' . str_pad($sequenceInt, 2, '0', STR_PAD_LEFT); // Pad with 2 digits: "BOX_02"
 
-            // Create scan history record
-            $scanHistory = ScanHistory::create([
-                'case_no' => $case->case_no,
-                'box_no' => $boxNo, // Using the corrected variable
-                'part_no' => $partNo,
-                'scanned_qty' => $quantity,
-                'total_qty' => $totalQty,
-                'seq' => $sequence,
-                'status' => 'scanned'
-            ]);
+            $scanHistory = null;
+            $errorMessage = null;
+
+            // Use transaction with lock to prevent race condition
+            DB::transaction(function () use ($case, $sequence, $boxNo, $partNo, $quantity, $totalQty, &$scanHistory, &$errorMessage) {
+                $existingScan = ScanHistory::where('case_no', $case->case_no)
+                    ->where('seq', $sequence)
+                    ->lockForUpdate()
+                    ->first();
+
+                if ($existingScan) {
+                    $errorMessage = 'Box with sequence ' . $sequence . ' has already been scanned';
+                    return;
+                }
+
+                // Create scan history record
+                $scanHistory = ScanHistory::create([
+                    'case_no' => $case->case_no,
+                    'box_no' => $boxNo,
+                    'part_no' => $partNo,
+                    'scanned_qty' => $quantity,
+                    'total_qty' => $totalQty,
+                    'seq' => $sequence,
+                    'status' => 'scanned'
+                ]);
+            });
+
+            if ($errorMessage) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $errorMessage
+                ], 409);
+            }
 
             return response()->json([
                 'success' => true,

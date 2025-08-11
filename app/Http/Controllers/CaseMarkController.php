@@ -11,6 +11,7 @@ use App\Imports\ContentListImport;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class CaseMarkController extends Controller
 {
@@ -399,28 +400,38 @@ public function listCaseMarkDetail($caseNo)
                 ]);
             }
 
-            // Check if already scanned
-            $existingScan = ScanHistory::where('case_no', $case->case_no)
-                ->where('box_no', $boxData['box_no'])
-                ->where('part_no', $boxData['part_no'])
-                ->first();
+            $errorMessage = null;
 
-            if ($existingScan) {
+            // Use transaction with lock to prevent race condition
+            DB::transaction(function () use ($case, $boxData, $contentList, &$errorMessage) {
+                $existingScan = ScanHistory::where('case_no', $case->case_no)
+                    ->where('box_no', $boxData['box_no'])
+                    ->where('part_no', $boxData['part_no'])
+                    ->lockForUpdate()
+                    ->first();
+
+                if ($existingScan) {
+                    $errorMessage = 'Box sudah pernah discan!';
+                    return;
+                }
+
+                // Record scan
+                ScanHistory::create([
+                    'case_no' => $case->case_no,
+                    'box_no' => $boxData['box_no'],
+                    'part_no' => $boxData['part_no'],
+                    'scanned_qty' => $contentList->quantity,
+                    'total_qty' => $contentList->quantity,
+                    'status' => 'scanned'
+                ]);
+            });
+
+            if ($errorMessage) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Box sudah pernah discan!'
+                    'message' => $errorMessage
                 ]);
             }
-
-            // Record scan
-            ScanHistory::create([
-                'case_no' => $case->case_no,
-                'box_no' => $boxData['box_no'],
-                'part_no' => $boxData['part_no'],
-                'scanned_qty' => $contentList->quantity,
-                'total_qty' => $contentList->quantity,
-                'status' => 'scanned'
-            ]);
 
             return response()->json([
                 'success' => true,
