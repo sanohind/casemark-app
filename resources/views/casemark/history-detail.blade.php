@@ -141,7 +141,11 @@
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $content->quantity }}</td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             @php
-                                $isScanned = $scanHistory->where('box_no', $content->box_no)->count() > 0;
+                                // FIX: Check scan status using both box_no AND part_no to prevent false detection
+                                // when different parts have the same box_no (sequence)
+                                // Use indexed scan history for efficient lookup
+                                $scanKey = $content->box_no . '|' . $content->part_no;
+                                $isScanned = isset($indexedScanHistory[$scanKey]);
                             @endphp
                             <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ $isScanned ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
                                 {{ $isScanned ? 'Scanned' : 'Unscanned' }}
@@ -173,6 +177,7 @@
         <div class="bg-purple-50 border border-purple-200 rounded-lg p-4 text-center">
             <div class="text-2xl font-bold text-purple-600">{{ $scanHistory->unique('box_no')->count() }}</div>
             <div class="text-sm text-purple-800">Unique Boxes</div>
+            <!-- Note: This counts unique box numbers for statistics, which is safe -->
         </div>
 
         <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">

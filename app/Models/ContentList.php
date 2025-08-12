@@ -17,7 +17,12 @@ class ContentList extends Model
         'part_no',
         'part_name',
         'quantity',
-        'remark'
+        'remark',
+        'status'
+    ];
+
+    protected $appends = [
+        'status'
     ];
 
     public function case()
@@ -45,6 +50,20 @@ class ContentList extends Model
 
     public function getStatusAttribute()
     {
+        // Jika kolom status sudah ada di database, ambil dari database
+        if (isset($this->attributes['status'])) {
+            return $this->attributes['status'];
+        }
+        
+        // Fallback ke logic lama jika status belum diset
         return $this->isScanned() ? 'Scanned' : 'Not Scanned';
+    }
+
+    // Method untuk update status berdasarkan scan
+    public function updateStatus()
+    {
+        $status = $this->isScanned() ? 'Scanned' : 'Not Scanned';
+        $this->update(['status' => $status]);
+        return $status;
     }
 }

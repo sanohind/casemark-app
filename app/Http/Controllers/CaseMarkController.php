@@ -135,10 +135,17 @@ class CaseMarkController extends Controller
         $contentLists = $case->contentLists()->orderBy('box_no')->get();
         
         // Ambil semua scan history untuk case ini (baik scanned maupun unscanned)
+        // FIX: Remove orderBy to prevent issues with collection filtering in views
         $scanHistory = ScanHistory::with('case')
             ->where('case_no', $case->case_no)
-            ->orderBy('scanned_at', 'desc')
             ->get();
+
+        // FIX: Create indexed scan history for efficient lookup in views
+        $indexedScanHistory = [];
+        foreach ($scanHistory as $scan) {
+            $key = $scan->box_no . '|' . $scan->part_no;
+            $indexedScanHistory[$key] = $scan;
+        }
 
         // Hitung progress
         $totalScannedQty = $scanHistory->sum('scanned_qty');
@@ -157,7 +164,7 @@ class CaseMarkController extends Controller
             ];
         })->values();
 
-        return view('casemark.history-detail', compact('case', 'contentLists', 'scanHistory', 'progress', 'scanProgress'));
+        return view('casemark.history-detail', compact('case', 'contentLists', 'scanHistory', 'indexedScanHistory', 'progress', 'scanProgress'));
     }
 
     // Upload Excel
@@ -341,10 +348,20 @@ public function listCaseMarkDetail($caseNo)
     $contentLists = $case->contentLists()->orderBy('box_no')->get();
     
     // Ambil semua scan history untuk case ini
+    // FIX: Remove orderBy to prevent issues with collection filtering in views
     $scanHistory = ScanHistory::with('case')
         ->where('case_no', $case->case_no)
-        ->orderBy('scanned_at', 'desc')
         ->get();
+
+    // FIX: Create indexed scan history for efficient lookup in views
+    $indexedScanHistory = [];
+    foreach ($scanHistory as $scan) {
+        $key = $scan->box_no . '|' . $scan->part_no;
+        // Prioritaskan status 'scanned', jika ada lebih dari satu, ambil yang 'scanned'
+        if (!isset($indexedScanHistory[$key]) || $scan->status === 'scanned') {
+            $indexedScanHistory[$key] = $scan;
+        }
+    }
 
     // Hitung progress
     $totalScannedQty = $scanHistory->sum('scanned_qty');
@@ -363,7 +380,7 @@ public function listCaseMarkDetail($caseNo)
         ];
     })->values();
 
-    return view('casemark.list-case-mark-detail', compact('case', 'contentLists', 'scanHistory', 'progress', 'scanProgress'));
+    return view('casemark.list-case-mark-detail', compact('case', 'contentLists', 'scanHistory', 'indexedScanHistory', 'progress', 'scanProgress'));
 }
 
     public function processScan(Request $request)

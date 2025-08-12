@@ -181,8 +181,8 @@
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $content->quantity }}</td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             @php
-                                $scannedBox = $scanHistory->where('box_no', $content->box_no)->first();
-                                $isScanned = $scannedBox ? true : false;
+                                $scanKey = $content->box_no . '|' . $content->part_no;
+                                $isScanned = isset($indexedScanHistory[$scanKey]) && $indexedScanHistory[$scanKey]->status === 'scanned';
                             @endphp
                             <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ $isScanned ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
                                 {{ $isScanned ? 'Scanned' : 'Unscanned' }}
@@ -190,11 +190,15 @@
                         </td>
                         @if($case->status == 'packed')
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            @if($scannedBox && $scannedBox->scanned_at)
-                                @if(is_string($scannedBox->scanned_at))
-                                    {{ \Carbon\Carbon::parse($scannedBox->scanned_at)->format('d/m/Y H:i') }}
+                            @php
+                                // Get scanned box for timestamp display using indexed scan history
+                                $scannedBoxForTimestamp = $indexedScanHistory[$scanKey] ?? null;
+                            @endphp
+                            @if($scannedBoxForTimestamp && $scannedBoxForTimestamp->scanned_at)
+                                @if(is_string($scannedBoxForTimestamp->scanned_at))
+                                    {{ \Carbon\Carbon::parse($scannedBoxForTimestamp->scanned_at)->format('d/m/Y H:i') }}
                                 @else
-                                    {{ $scannedBox->scanned_at->format('d/m/Y H:i') }}
+                                    {{ $scannedBoxForTimestamp->scanned_at->format('d/m/Y H:i') }}
                                 @endif
                             @else
                                 -

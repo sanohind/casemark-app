@@ -597,12 +597,40 @@ function updateProgressTables(data) {
             if (response.success) {
                 const data = response.data;
 
-                // Update scan progress table
+                // Update scan progress table - FIX: Handle multiple parts in scanProgress array
                 const progressBody = document.querySelector('tbody');
                 if (progressBody) {
-                    const isComplete = data.scannedBoxes >= data.totalBoxes && data.totalBoxes > 0;
-                    progressBody.innerHTML = `
-                        <tr>
+                    progressBody.innerHTML = '';
+
+                    // Check if scanProgress is an array (multiple parts) or single object
+                    if (Array.isArray(data.scanProgress)) {
+                        // Multiple parts - display each part separately
+                        data.scanProgress.forEach((progress, index) => {
+                            const progressParts = progress.progress.split('/');
+                            const scanned = parseInt(progressParts[0]);
+                            const total = parseInt(progressParts[1]);
+                            const isComplete = scanned >= total;
+
+                            const row = document.createElement('tr');
+                            row.className = index % 2 === 0 ? 'bg-white' : 'bg-gray-50';
+                            row.innerHTML = `
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${index + 1}.</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${progress.part_no}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${progress.part_name}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${progress.quantity}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="inline-flex px-3 py-1 text-sm font-semibold rounded-full ${isComplete ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                                        ${progress.progress}
+                                    </span>
+                                </td>
+                            `;
+                            progressBody.appendChild(row);
+                        });
+                    } else {
+                        // Single part (fallback for backward compatibility)
+                        const isComplete = data.scannedBoxes >= data.totalBoxes && data.totalBoxes > 0;
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">1.</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${data.scanProgress.part_no}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${data.scanProgress.part_name}</td>
@@ -612,8 +640,9 @@ function updateProgressTables(data) {
                                     ${data.progress}
                                 </span>
                             </td>
-                        </tr>
-                    `;
+                        `;
+                        progressBody.appendChild(row);
+                    }
                 }
 
                 // Update details table
@@ -870,7 +899,7 @@ function hideSuccessToast() {
 function showErrorToast(message, autoClearInput = true) {
     const toast = document.getElementById('errorToast');
     const audio = document.getElementById('errorAudio');
-    
+
     if (toast) {
         document.getElementById('errorToastMessage').textContent = message;
 
@@ -885,7 +914,7 @@ function showErrorToast(message, autoClearInput = true) {
         if (audio) {
             audio.currentTime = 0; // Reset audio to beginning
             audio.play().catch(e => console.log('Audio play failed:', e));
-            
+
             // Stop audio after 6 seconds
             setTimeout(() => {
                 audio.pause();
@@ -920,7 +949,7 @@ function showErrorToast(message, autoClearInput = true) {
 function hideErrorToast() {
     const toast = document.getElementById('errorToast');
     const audio = document.getElementById('errorAudio');
-    
+
     if (toast) {
         toast.classList.remove('translate-x-0');
         toast.classList.add('translate-x-full');

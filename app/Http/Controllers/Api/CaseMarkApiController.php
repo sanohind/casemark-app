@@ -710,13 +710,16 @@ class CaseMarkApiController extends Controller
 
             // Use transaction with lock to prevent race condition
             DB::transaction(function () use ($case, $sequence, $boxNo, $partNo, $quantity, $totalQty, &$scanHistory, &$errorMessage) {
+                // FIX: Check for existing scan using both sequence AND part_no to prevent duplicate detection
+                // when different parts have the same sequence number
                 $existingScan = ScanHistory::where('case_no', $case->case_no)
                     ->where('seq', $sequence)
+                    ->where('part_no', $partNo)
                     ->lockForUpdate()
                     ->first();
 
                 if ($existingScan) {
-                    $errorMessage = 'Box with sequence ' . $sequence . ' has already been scanned';
+                    $errorMessage = 'Box with sequence ' . $sequence . ' and part ' . $partNo . ' has already been scanned';
                     return;
                 }
 
@@ -988,26 +991,25 @@ class CaseMarkApiController extends Controller
             $totalExpected = $contentLists->sum('quantity');
             $progress = $totalExpected > 0 ? $totalScanned . '/' . $totalExpected : '0/0';
 
-            // Prepare scan progress data
-            $scanProgress = [
-                'part_no' => $contentLists->first()->part_no ?? 'N/A',
-                'part_name' => $contentLists->first()->part_name ?? 'N/A',
-                'quantity' => $contentLists->first()->quantity ?? 0, // Quantity per box
-                'progress' => $progress
-            ];
+            // Prepare scan progress data - FIX: Group by part_no to show progress for each part separately
+            $scanProgress = $contentLists->groupBy('part_no')->map(function ($items) use ($scanHistory) {
+                $totalQty = $items->sum('quantity');
+                $scannedQty = $scanHistory->where('part_no', $items->first()->part_no)->sum('scanned_qty');
+                return [
+                    'part_no' => $items->first()->part_no,
+                    'part_name' => $items->first()->part_name,
+                    'quantity' => $items->first()->quantity, // Quantity per box
+                    'progress' => $scannedQty . '/' . $totalQty
+                ];
+            })->values();
 
             // Prepare details data - FIX: Use correct logic to determine status
             $details = $contentLists->map(function ($content) use ($scanHistory) {
-                // FIX: Search by box_no only because from scan box, 
-                // box_no is created from sequence and part_no from barcode might have different format
-                $scannedBox = $scanHistory->where('box_no', $content->box_no)->first();
-
-                // If not found by box_no, try searching by combination of box_no and part_no
-                if (!$scannedBox) {
-                    $scannedBox = $scanHistory->where('box_no', $content->box_no)
-                        ->where('part_no', $content->part_no)
-                        ->first();
-                }
+                // FIX: Search by combination of box_no AND part_no to prevent false detection
+                // when different parts have the same box_no (sequence)
+                $scannedBox = $scanHistory->where('box_no', $content->box_no)
+                    ->where('part_no', $content->part_no)
+                    ->first();
 
                 $isScanned = $scannedBox ? true : false;
 
