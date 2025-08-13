@@ -43,9 +43,18 @@ class CaseModel extends Model
     public function getProgressAttribute()
     {
         $totalBoxes = $this->contentLists()->count();
-        $scannedBoxes = $this->scanHistory()->where('status', 'scanned')->distinct('box_no')->count();
         
-        if ($totalBoxes == 0) return '0/0';
+        if ($this->status == 'packed') {
+            // For packed cases, all boxes are considered scanned.
+            $scannedBoxes = $totalBoxes;
+        } else {
+            // For other statuses, count boxes with 'scanned' status.
+            $scannedBoxes = $this->scanHistory()->where('status', 'scanned')->count();
+        }
+        
+        if ($totalBoxes == 0) {
+            return '0/0';
+        }
         
         return "{$scannedBoxes}/{$totalBoxes}";
     }

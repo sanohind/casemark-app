@@ -418,7 +418,7 @@ class CaseMarkApiController extends Controller
             $existingCase = null;
             $caseExists = false;
             $existingContentCount = 0;
-            
+
             if (!empty($caseNo)) {
                 $existingCase = CaseModel::where('case_no', $caseNo)->first();
                 if ($existingCase) {
@@ -489,18 +489,18 @@ class CaseMarkApiController extends Controller
     {
         try {
             $barcode = $request->input('barcode');
-    
+
             if (!$barcode) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Barcode is required'
                 ], 400);
             }
-    
+
             // Clean barcode from any control characters
             $barcode = trim($barcode);
             $barcode = preg_replace('/[\x00-\x1F\x7F]/', '', $barcode);
-    
+
             // TAMBAHKAN VALIDASI INI - Validate if this is actually a container barcode
             if (!$this->isContainerBarcode($barcode)) {
                 return response()->json([
@@ -573,7 +573,7 @@ class CaseMarkApiController extends Controller
 
                 return response()->json([
                     'success' => false,
-                    'message' => 'Case not found: ' . $caseNo . '. Please check the barcode and try again.', 
+                    'message' => 'Case not found: ' . $caseNo . '. Please check the barcode and try again.',
                 ], 404);
             }
 
@@ -609,18 +609,18 @@ class CaseMarkApiController extends Controller
         try {
             $barcode = $request->input('barcode');
             $caseId = $request->input('case_id');
-    
+
             if (!$barcode || !$caseId) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Barcode and case_id are required'
                 ], 400);
             }
-    
+
             // Clean barcode from any control characters
             $barcode = trim($barcode);
             $barcode = preg_replace('/[\x00-\x1F\x7F]/', '', $barcode);
-    
+
             // TAMBAHKAN VALIDASI INI - Validate if this is actually a box barcode
             if (!$this->isBoxBarcode($barcode)) {
                 return response()->json([
@@ -710,6 +710,30 @@ class CaseMarkApiController extends Controller
 
             // Use transaction with lock to prevent race condition
             DB::transaction(function () use ($case, $sequence, $boxNo, $partNo, $quantity, $totalQty, &$scanHistory, &$errorMessage) {
+               // 1. Validate if part_no exists in the content list for this case
+               $contentExists = ContentList::where('case_id', $case->id)
+                   ->where('part_no', $partNo)
+                   ->exists();
+               
+               if (!$contentExists) {
+                   $errorMessage = 'Part number ' . $partNo . ' does not exist in this case.';
+                   return;
+               }
+
+               // 2. Prevent overscanning
+               $expectedBoxCount = ContentList::where('case_id', $case->id)
+                   ->where('part_no', $partNo)
+                   ->count();
+               
+               $scannedBoxCount = ScanHistory::where('case_no', $case->case_no)
+                   ->where('part_no', $partNo)
+                   ->count();
+
+               if ($scannedBoxCount >= $expectedBoxCount) {
+                   $errorMessage = 'All boxes for part number ' . $partNo . ' have already been scanned.';
+                   return;
+               }
+
                 // FIX: Check for existing scan using both sequence AND part_no to prevent duplicate detection
                 // when different parts have the same sequence number
                 $existingScan = ScanHistory::where('case_no', $case->case_no)
@@ -784,11 +808,11 @@ class CaseMarkApiController extends Controller
 
             // Check if barcode contains '#' (final barcode format) or not (container barcode format)
             $isFinalBarcodeFormat = strpos($barcode, '#') !== false;
-            
+
             if ($isFinalBarcodeFormat) {
                 // Final barcode format: I2A-SAN-00432-SA#CR-06PG_40#20250615#1B
                 $parts = explode('#', $barcode);
-                
+
                 // Validasi minimal 3 parts (case_no#part_info#date#status)
                 if (count($parts) < 3) {
                     return response()->json([
@@ -796,7 +820,7 @@ class CaseMarkApiController extends Controller
                         'message' => 'Invalid final barcode format. Expected format: CASE_NO#PART_INFO#DATE#STATUS'
                     ], 400);
                 }
-                
+
                 // Extract case number from first part
                 $possibleCaseNumbers = [];
                 if (preg_match('/^([A-Z0-9-]{11,13})/', $parts[0], $matches)) {
@@ -806,7 +830,7 @@ class CaseMarkApiController extends Controller
                 $possibleCaseNumbers[] = substr($parts[0], 0, 11);
                 $possibleCaseNumbers[] = substr($parts[0], 0, 13);
                 $possibleCaseNumbers = array_unique(array_filter($possibleCaseNumbers));
-                
+
                 $case = null;
                 $finalCaseNo = null;
                 foreach ($possibleCaseNumbers as $possibleCaseNo) {
@@ -816,7 +840,7 @@ class CaseMarkApiController extends Controller
                         break;
                     }
                 }
-                
+
                 if (!$case) {
                     $finalCaseNo = $possibleCaseNumbers[0] ?? substr($parts[0], 0, 12);
                     return response()->json([
@@ -824,7 +848,7 @@ class CaseMarkApiController extends Controller
                         'message' => 'Case not found: ' . $finalCaseNo
                     ], 404);
                 }
-                
+
                 // Optional: Validate date format if present (part index 2)
                 if (isset($parts[2]) && !empty($parts[2])) {
                     $datePart = $parts[2];
@@ -845,7 +869,7 @@ class CaseMarkApiController extends Controller
                 $possibleCaseNumbers[] = substr($barcode, 0, 11);
                 $possibleCaseNumbers[] = substr($barcode, 0, 13);
                 $possibleCaseNumbers = array_unique(array_filter($possibleCaseNumbers));
-                
+
                 $case = null;
                 $finalCaseNo = null;
                 foreach ($possibleCaseNumbers as $possibleCaseNo) {
@@ -855,7 +879,7 @@ class CaseMarkApiController extends Controller
                         break;
                     }
                 }
-                
+
                 if (!$case) {
                     $finalCaseNo = $possibleCaseNumbers[0] ?? substr($barcode, 0, 12);
                     return response()->json([
@@ -991,7 +1015,7 @@ class CaseMarkApiController extends Controller
             $totalExpected = $contentLists->sum('quantity');
             $progress = $totalExpected > 0 ? $totalScanned . '/' . $totalExpected : '0/0';
 
-            // Prepare scan progress data - FIX: Group by part_no to show progress for each part separately
+            // Prepare scan progress data - Group by part_no to show progress for each part separately
             $scanProgress = $contentLists->groupBy('part_no')->map(function ($items) use ($scanHistory) {
                 $totalQty = $items->sum('quantity');
                 $scannedQty = $scanHistory->where('part_no', $items->first()->part_no)->sum('scanned_qty');
@@ -1003,14 +1027,24 @@ class CaseMarkApiController extends Controller
                 ];
             })->values();
 
-            // Prepare details data - FIX: Use correct logic to determine status
-            $details = $contentLists->map(function ($content) use ($scanHistory) {
-                // FIX: Search by combination of box_no AND part_no to prevent false detection
-                // when different parts have the same box_no (sequence)
-                $scannedBox = $scanHistory->where('box_no', $content->box_no)
-                    ->where('part_no', $content->part_no)
-                    ->first();
+            // FIXED: Prepare details data with proper matching logic
+            // Group contentLists by part_no to track scanned count per part
+            $contentByPart = $contentLists->groupBy('part_no');
 
+            $details = $contentLists->map(function ($content) use ($scanHistory, $contentByPart) {
+                // Get all scans for this part number, ordered by scan time
+                $scansForThisPart = $scanHistory->where('part_no', $content->part_no)
+                    ->sortBy('created_at')
+                    ->values();
+
+                // Get the position of this content item within its part group
+                $contentItemsForThisPart = $contentByPart[$content->part_no]->sortBy('box_no');
+                $positionInPart = $contentItemsForThisPart->search(function ($item) use ($content) {
+                    return $item->id === $content->id;
+                });
+
+                // Check if there's a scan record at this position
+                $scannedBox = $scansForThisPart->get($positionInPart);
                 $isScanned = $scannedBox ? true : false;
 
                 return [
@@ -1018,8 +1052,12 @@ class CaseMarkApiController extends Controller
                     'part_no' => $content->part_no,
                     'part_name' => $content->part_name,
                     'quantity' => $content->quantity,
-                    'status' => $isScanned, // Use boolean
-                    'is_scanned' => $isScanned // Add this property for consistency with blade
+                    'status' => $isScanned,
+                    'is_scanned' => $isScanned,
+                    // Debug info (remove in production)
+                    'debug_position_in_part' => $positionInPart,
+                    'debug_scans_for_part' => $scansForThisPart->count(),
+                    'debug_scanned_id' => $scannedBox ? $scannedBox->id : null
                 ];
             });
 
@@ -1029,8 +1067,17 @@ class CaseMarkApiController extends Controller
                     'progress' => $progress,
                     'scanProgress' => $scanProgress,
                     'details' => $details,
-                    'scannedBoxes' => $scanHistory->count(), // Count based on number of scan_history records
-                    'totalBoxes' => $contentLists->count()
+                    'scannedBoxes' => $scanHistory->count(),
+                    'totalBoxes' => $contentLists->count(),
+                    // Debug info (remove in production)
+                    'debug_scan_history' => $scanHistory->map(function ($scan) {
+                        return [
+                            'id' => $scan->id,
+                            'box_no' => $scan->box_no,
+                            'part_no' => $scan->part_no,
+                            'seq' => $scan->seq
+                        ];
+                    })
                 ]
             ]);
         } catch (\Exception $e) {
@@ -1043,59 +1090,59 @@ class CaseMarkApiController extends Controller
     }
 
     /**
- * Validate if barcode is container format
- */
-private function isContainerBarcode($barcode)
-{
-    // Container format: I2A-SAN-00432-SA#CR-06PG_40#20250615#1B
-    // Expected parts: 4 (case_no#part_info#date#status)
-    $parts = explode('#', $barcode);
-    
-    // Container barcode should have exactly 4 parts
-    if (count($parts) !== 4) {
-        return false;
-    }
-    
-    // Additional validation: second part should not be numeric (like part number)
-    // Container's second part is like "CR-06PG_40", box's second part is like "23901-BZ140-00-87"
-    $secondPart = $parts[1];
-    
-    // If second part starts with numbers only (like "23901"), it's likely a box barcode
-    if (preg_match('/^\d+/', $secondPart)) {
-        return false;
-    }
-    
-    return true;
-}
+     * Validate if barcode is container format
+     */
+    private function isContainerBarcode($barcode)
+    {
+        // Container format: I2A-SAN-00432-SA#CR-06PG_40#20250615#1B
+        // Expected parts: 4 (case_no#part_info#date#status)
+        $parts = explode('#', $barcode);
 
-/**
- * Validate if barcode is box format
- */
-private function isBoxBarcode($barcode)
-{
-    // Box format: I2A-SAN-00432-SA#23901-BZ140-00-87#00020#001-060#0#20250615#0#1B
-    // Expected parts: 8 (case_no#part_no#quantity#sequence#unknown#date#unknown#status)
-    $parts = explode('#', $barcode);
-    
-    // Box barcode should have exactly 8 parts
-    if (count($parts) !== 8) {
-        return false;
+        // Container barcode should have exactly 4 parts
+        if (count($parts) !== 4) {
+            return false;
+        }
+
+        // Additional validation: second part should not be numeric (like part number)
+        // Container's second part is like "CR-06PG_40", box's second part is like "23901-BZ140-00-87"
+        $secondPart = $parts[1];
+
+        // If second part starts with numbers only (like "23901"), it's likely a box barcode
+        if (preg_match('/^\d+/', $secondPart)) {
+            return false;
+        }
+
+        return true;
     }
-    
-    // Additional validation: second part should start with numbers (part number)
-    $secondPart = $parts[1];
-    
-    // If second part starts with numbers (like "23901"), it's likely a box barcode
-    if (!preg_match('/^\d+/', $secondPart)) {
-        return false;
+
+    /**
+     * Validate if barcode is box format
+     */
+    private function isBoxBarcode($barcode)
+    {
+        // Box format: I2A-SAN-00432-SA#23901-BZ140-00-87#00020#001-060#0#20250615#0#1B
+        // Expected parts: 8 (case_no#part_no#quantity#sequence#unknown#date#unknown#status)
+        $parts = explode('#', $barcode);
+
+        // Box barcode should have exactly 8 parts
+        if (count($parts) !== 8) {
+            return false;
+        }
+
+        // Additional validation: second part should start with numbers (part number)
+        $secondPart = $parts[1];
+
+        // If second part starts with numbers (like "23901"), it's likely a box barcode
+        if (!preg_match('/^\d+/', $secondPart)) {
+            return false;
+        }
+
+        // Third part should be numeric quantity
+        $thirdPart = $parts[2];
+        if (!is_numeric($thirdPart)) {
+            return false;
+        }
+
+        return true;
     }
-    
-    // Third part should be numeric quantity
-    $thirdPart = $parts[2];
-    if (!is_numeric($thirdPart)) {
-        return false;
-    }
-    
-    return true;
-}
 }

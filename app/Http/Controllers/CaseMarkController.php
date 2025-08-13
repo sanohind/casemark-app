@@ -26,11 +26,22 @@ class CaseMarkController extends Controller
         if ($caseNo) {
             $case = CaseModel::where('case_no', $caseNo)->firstOrFail();
             $contentLists = $case->contentLists()->get();
-            // Fetch only scanned boxes for this case
-            $scanHistory = $case->scanHistory()->where('status', 'scanned')->orderBy('scanned_at', 'desc')->get();
+            
+            // FIXED: Use consistent scan history query (remove status filter)
+            $scanHistory = $case->scanHistory()->orderBy('scanned_at', 'desc')->get();
 
-            // Calculate progress: total scanned quantity / total quantity
-            $totalScannedQty = $scanHistory->sum('scanned_qty');
+            // FIXED: Calculate progress using position-based matching (same as API)
+            $contentByPart = $contentLists->groupBy('part_no');
+            
+            // Calculate total scanned using position-based logic
+            $totalScannedQty = 0;
+            foreach ($contentByPart as $partNo => $contentItems) {
+                $scansForThisPart = $scanHistory->where('part_no', $partNo)->sortBy('created_at');
+                $scannedCount = $scansForThisPart->count();
+                $quantityPerBox = $contentItems->first()->quantity;
+                $totalScannedQty += $scannedCount * $quantityPerBox;
+            }
+            
             $totalQty = $contentLists->sum('quantity');
             $progress = $totalQty > 0 ? $totalScannedQty . '/' . $totalQty : '0/0';
 
@@ -117,11 +128,21 @@ class CaseMarkController extends Controller
         });
         $productionMonthsCount = $allPackedCasesForStats->unique('prod_month')->count();
         
-        // Hitung progress untuk setiap case
+        // FIXED: Calculate progress for each case using position-based matching
         foreach ($cases as $case) {
+            $contentByPart = $case->contentLists->groupBy('part_no');
+            $scanHistory = $case->scanHistory;
+            
+            $totalScannedQty = 0;
+            foreach ($contentByPart as $partNo => $contentItems) {
+                $scansForThisPart = $scanHistory->where('part_no', $partNo)->sortBy('created_at');
+                $scannedCount = $scansForThisPart->count();
+                $quantityPerBox = $contentItems->first()->quantity;
+                $totalScannedQty += $scannedCount * $quantityPerBox;
+            }
+            
             $totalQty = $case->contentLists->sum('quantity');
-            $scannedQty = $case->scanHistory()->where('status', 'packed')->sum('scanned_qty');
-            $case->progress = $totalQty > 0 ? $scannedQty . '/' . $totalQty : '0/0';
+            $case->progress = $totalQty > 0 ? $totalScannedQty . '/' . $totalQty : '0/0';
         }
 
         return view('casemark.history', compact('cases', 'allPackedCases', 'packedCasesCount', 'totalBoxesCount', 'totalQuantityCount', 'productionMonthsCount'));
@@ -134,21 +155,45 @@ class CaseMarkController extends Controller
         // Ambil semua content lists untuk case ini
         $contentLists = $case->contentLists()->orderBy('box_no')->get();
         
-        // Ambil semua scan history untuk case ini (baik scanned maupun unscanned)
-        // FIX: Remove orderBy to prevent issues with collection filtering in views
+        // Ambil semua scan history untuk case ini
         $scanHistory = ScanHistory::with('case')
             ->where('case_no', $case->case_no)
             ->get();
 
-        // FIX: Create indexed scan history for efficient lookup in views
+        // FIXED: Create indexed scan history using position-based matching (same as API)
+        $contentByPart = $contentLists->groupBy('part_no');
         $indexedScanHistory = [];
-        foreach ($scanHistory as $scan) {
-            $key = $scan->box_no . '|' . $scan->part_no;
-            $indexedScanHistory[$key] = $scan;
+        
+        foreach ($contentLists as $content) {
+            // Get all scans for this part number, ordered by scan time
+            $scansForThisPart = $scanHistory->where('part_no', $content->part_no)
+                ->sortBy('created_at')
+                ->values();
+            
+            // Get the position of this content item within its part group
+            $contentItemsForThisPart = $contentByPart[$content->part_no]->sortBy('box_no');
+            $positionInPart = $contentItemsForThisPart->search(function($item) use ($content) {
+                return $item->id === $content->id;
+            });
+            
+            // Check if there's a scan record at this position
+            $scannedBox = $scansForThisPart->get($positionInPart);
+            
+            if ($scannedBox) {
+                $key = $content->box_no . '|' . $content->part_no;
+                $indexedScanHistory[$key] = $scannedBox;
+            }
         }
 
-        // Hitung progress
-        $totalScannedQty = $scanHistory->sum('scanned_qty');
+        // Calculate progress using position-based matching
+        $totalScannedQty = 0;
+        foreach ($contentByPart as $partNo => $contentItems) {
+            $scansForThisPart = $scanHistory->where('part_no', $partNo)->sortBy('created_at');
+            $scannedCount = $scansForThisPart->count();
+            $quantityPerBox = $contentItems->first()->quantity;
+            $totalScannedQty += $scannedCount * $quantityPerBox;
+        }
+        
         $totalQty = $contentLists->sum('quantity');
         $progress = $totalQty > 0 ? $totalScannedQty . '/' . $totalQty : '0/0';
 
@@ -172,8 +217,6 @@ class CaseMarkController extends Controller
     {
         return view('casemark.upload');
     }
-
-
 
     public function uploadExcel(Request $request)
     {
@@ -339,49 +382,70 @@ class CaseMarkController extends Controller
         return view('casemark.list-case-mark', compact('cases', 'unpackedCount', 'inProgressCount', 'packedCount'));
     }
 
-// List Case Mark Detail 
-public function listCaseMarkDetail($caseNo)
-{
-    $case = CaseModel::where('case_no', $caseNo)->firstOrFail();
+    // List Case Mark Detail 
+    public function listCaseMarkDetail($caseNo)
+    {
+        $case = CaseModel::where('case_no', $caseNo)->firstOrFail();
 
-    // Ambil semua content lists untuk case ini
-    $contentLists = $case->contentLists()->orderBy('box_no')->get();
-    
-    // Ambil semua scan history untuk case ini
-    // FIX: Remove orderBy to prevent issues with collection filtering in views
-    $scanHistory = ScanHistory::with('case')
-        ->where('case_no', $case->case_no)
-        ->get();
+        // Ambil semua content lists untuk case ini
+        $contentLists = $case->contentLists()->orderBy('box_no')->get();
+        
+        // Ambil semua scan history untuk case ini
+        $scanHistory = ScanHistory::with('case')
+            ->where('case_no', $case->case_no)
+            ->get();
 
-    // FIX: Create indexed scan history for efficient lookup in views
-    $indexedScanHistory = [];
-    foreach ($scanHistory as $scan) {
-        $key = $scan->box_no . '|' . $scan->part_no;
-        // Prioritaskan status 'scanned', jika ada lebih dari satu, ambil yang 'scanned'
-        if (!isset($indexedScanHistory[$key]) || $scan->status === 'scanned') {
-            $indexedScanHistory[$key] = $scan;
+        // FIXED: Create indexed scan history using position-based matching (same as API)
+        $contentByPart = $contentLists->groupBy('part_no');
+        $indexedScanHistory = [];
+        
+        foreach ($contentLists as $content) {
+            // Get all scans for this part number, ordered by scan time
+            $scansForThisPart = $scanHistory->where('part_no', $content->part_no)
+                ->sortBy('created_at')
+                ->values();
+            
+            // Get the position of this content item within its part group
+            $contentItemsForThisPart = $contentByPart[$content->part_no]->sortBy('box_no');
+            $positionInPart = $contentItemsForThisPart->search(function($item) use ($content) {
+                return $item->id === $content->id;
+            });
+            
+            // Check if there's a scan record at this position
+            $scannedBox = $scansForThisPart->get($positionInPart);
+            
+            if ($scannedBox) {
+                $key = $content->box_no . '|' . $content->part_no;
+                $indexedScanHistory[$key] = $scannedBox;
+            }
         }
+
+        // Calculate progress using position-based matching
+        $totalScannedQty = 0;
+        foreach ($contentByPart as $partNo => $contentItems) {
+            $scansForThisPart = $scanHistory->where('part_no', $partNo)->sortBy('created_at');
+            $scannedCount = $scansForThisPart->count();
+            $quantityPerBox = $contentItems->first()->quantity;
+            $totalScannedQty += $scannedCount * $quantityPerBox;
+        }
+        
+        $totalQty = $contentLists->sum('quantity');
+        $progress = $totalQty > 0 ? $totalScannedQty . '/' . $totalQty : '0/0';
+
+        // Hitung progress per part untuk Scan Progress table
+        $scanProgress = $contentLists->groupBy('part_no')->map(function ($items) use ($scanHistory) {
+            $totalQty = $items->sum('quantity');
+            $scannedQty = $scanHistory->where('part_no', $items->first()->part_no)->sum('scanned_qty');
+            return [
+                'part_no' => $items->first()->part_no,
+                'part_name' => $items->first()->part_name,
+                'quantity' => $items->first()->quantity,
+                'progress' => $scannedQty . '/' . $totalQty
+            ];
+        })->values();
+
+        return view('casemark.list-case-mark-detail', compact('case', 'contentLists', 'scanHistory', 'indexedScanHistory', 'progress', 'scanProgress'));
     }
-
-    // Hitung progress
-    $totalScannedQty = $scanHistory->sum('scanned_qty');
-    $totalQty = $contentLists->sum('quantity');
-    $progress = $totalQty > 0 ? $totalScannedQty . '/' . $totalQty : '0/0';
-
-    // Hitung progress per part untuk Scan Progress table
-    $scanProgress = $contentLists->groupBy('part_no')->map(function ($items) use ($scanHistory) {
-        $totalQty = $items->sum('quantity');
-        $scannedQty = $scanHistory->where('part_no', $items->first()->part_no)->sum('scanned_qty');
-        return [
-            'part_no' => $items->first()->part_no,
-            'part_name' => $items->first()->part_name,
-            'quantity' => $items->first()->quantity,
-            'progress' => $scannedQty . '/' . $totalQty
-        ];
-    })->values();
-
-    return view('casemark.list-case-mark-detail', compact('case', 'contentLists', 'scanHistory', 'indexedScanHistory', 'progress', 'scanProgress'));
-}
 
     public function processScan(Request $request)
     {
@@ -393,52 +457,65 @@ public function listCaseMarkDetail($caseNo)
         try {
             $case = CaseModel::where('case_no', $request->case_no)->firstOrFail();
 
-            // Parse QR code to extract box info
+            // FIXED: Parse QR code with new format support
             $boxData = $this->parseBoxQR($request->box_qr);
 
-            // Validate case number with case insensitive comparison
-            if (strtoupper($boxData['case_no']) !== strtoupper($case->case_no)) {
+            // FIXED: Validate case number if present in QR
+            if (!empty($boxData['case_no'])) {
+                if (strtoupper($boxData['case_no']) !== strtoupper($case->case_no)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => "Box case number does not match container case number. Container: {$case->case_no}, Box: {$boxData['case_no']}"
+                    ]);
+                }
+            }
+
+            // FIXED: Handle different QR formats
+            if (empty($boxData['part_no'])) {
+                // If part_no is not in QR, we need to determine it from sequence
                 return response()->json([
                     'success' => false,
-                    'message' => "Box case number does not match container case number. Container: {$case->case_no}, Box: {$boxData['case_no']}"
+                    'message' => 'Part number not found in QR code. Please use complete QR format.'
                 ]);
             }
 
-            // Find matching content list
+            // Find matching content list using part_no and sequence logic
             $contentList = ContentList::where('case_id', $case->id)
-                ->where('box_no', $boxData['box_no'])
                 ->where('part_no', $boxData['part_no'])
                 ->first();
 
             if (!$contentList) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Box tidak sesuai dengan content list!'
+                    'message' => 'Part number tidak ditemukan dalam content list!'
                 ]);
             }
 
             $errorMessage = null;
+            $scanRecord = null;
 
             // Use transaction with lock to prevent race condition
-            DB::transaction(function () use ($case, $boxData, $contentList, &$errorMessage) {
+            DB::transaction(function () use ($case, $boxData, $contentList, &$errorMessage, &$scanRecord) {
+                // FIXED: Check for duplicate scan using sequence and part_no
                 $existingScan = ScanHistory::where('case_no', $case->case_no)
-                    ->where('box_no', $boxData['box_no'])
+                    ->where('seq', $boxData['seq'])
                     ->where('part_no', $boxData['part_no'])
                     ->lockForUpdate()
                     ->first();
 
                 if ($existingScan) {
-                    $errorMessage = 'Box sudah pernah discan!';
+                    $errorMessage = 'Box dengan sequence ' . $boxData['seq'] . ' untuk part ' . $boxData['part_no'] . ' sudah pernah discan!';
                     return;
                 }
 
-                // Record scan
-                ScanHistory::create([
+                // Record scan with sequence
+                $scanRecord = ScanHistory::create([
                     'case_no' => $case->case_no,
                     'box_no' => $boxData['box_no'],
                     'part_no' => $boxData['part_no'],
-                    'scanned_qty' => $contentList->quantity,
-                    'total_qty' => $contentList->quantity,
+                    'scanned_qty' => $boxData['quantity'],
+                    'total_qty' => $boxData['total_qty'],
+                    'seq' => $boxData['seq'],
                     'status' => 'scanned'
                 ]);
             });
@@ -457,7 +534,7 @@ public function listCaseMarkDetail($caseNo)
                     'box_no' => $boxData['box_no'],
                     'part_no' => $boxData['part_no'],
                     'part_name' => $contentList->part_name,
-                    'quantity' => $contentList->quantity
+                    'quantity' => $boxData['quantity']
                 ]
             ]);
         } catch (\Exception $e) {
@@ -468,16 +545,88 @@ public function listCaseMarkDetail($caseNo)
         }
     }
 
-
-
+    // FIXED: Update parseBoxQR method to handle new format
     private function parseBoxQR($qrCode)
     {
-        // Assuming QR format: BOX_01|32909-BZ100-00-87
-        $parts = explode('|', $qrCode);
+        // FIXED: Handle new barcode format
+        // New format: I2A-SAN-00432-SA#23901-BZ140-00-87#00020#001-060#0#20250615#0#1B
+        // Old format: BOX_01|32909-BZ100-00-87
+        
+        if (strpos($qrCode, '#') !== false) {
+            // New format
+            $parts = explode('#', $qrCode);
+            
+            if (count($parts) >= 4) {
+                // Extract case number
+                $possibleCaseNumbers = [];
+                if (preg_match('/^([A-Z0-9-]{11,13})/', $parts[0], $matches)) {
+                    $possibleCaseNumbers[] = $matches[1];
+                }
+                $possibleCaseNumbers[] = substr($parts[0], 0, 12);
+                $possibleCaseNumbers[] = substr($parts[0], 0, 11);
+                $possibleCaseNumbers[] = substr($parts[0], 0, 13);
+                $caseNo = array_filter($possibleCaseNumbers)[0] ?? '';
+                
+                $partNo = $parts[1];
+                $quantity = (int) $parts[2];
+                $sequence = substr($parts[3], 0, 3);
+                $totalSequence = substr($parts[3], -3);
+                $totalQty = $quantity * (int) $totalSequence;
+                
+                // Generate box_no from sequence
+                $sequenceInt = (int) $sequence;
+                $boxNo = 'BOX_' . str_pad($sequenceInt, 2, '0', STR_PAD_LEFT);
+                
+                return [
+                    'case_no' => $caseNo,
+                    'box_no' => $boxNo,
+                    'part_no' => $partNo,
+                    'quantity' => $quantity,
+                    'total_qty' => $totalQty,
+                    'seq' => $sequence
+                ];
+            }
+        } else {
+            // Old format
+            $separators = ['|', ':', '-', '_'];
+            $parts = [];
 
+            foreach ($separators as $separator) {
+                if (strpos($qrCode, $separator) !== false) {
+                    $parts = explode($separator, $qrCode, 2);
+                    break;
+                }
+            }
+
+            if (count($parts) >= 2) {
+                return [
+                    'case_no' => '',
+                    'box_no' => trim($parts[0]),
+                    'part_no' => trim($parts[1]),
+                    'quantity' => 0,
+                    'total_qty' => 0,
+                    'seq' => ''
+                ];
+            }
+
+            // If no separator found, assume it's just a box number
+            return [
+                'case_no' => '',
+                'box_no' => trim($qrCode),
+                'part_no' => '',
+                'quantity' => 0,
+                'total_qty' => 0,
+                'seq' => ''
+            ];
+        }
+        
         return [
-            'box_no' => $parts[0] ?? '',
-            'part_no' => $parts[1] ?? ''
+            'case_no' => '',
+            'box_no' => '',
+            'part_no' => '',
+            'quantity' => 0,
+            'total_qty' => 0,
+            'seq' => ''
         ];
     }
 
@@ -489,13 +638,6 @@ public function listCaseMarkDetail($caseNo)
 
         try {
             $case = CaseModel::where('case_no', $request->case_no)->firstOrFail();
-
-            // Update all scanned items to unscanned
-            ScanHistory::where('case_no', $case->case_no)
-                ->where('status', 'scanned')
-                ->update([
-                    'status' => 'unscanned'
-                ]);
 
             // Update case status and packing_date
             $case->update([
