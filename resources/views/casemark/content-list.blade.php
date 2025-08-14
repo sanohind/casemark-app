@@ -352,7 +352,7 @@ document.getElementById('boxBarcode').addEventListener('input', function(e) {
             if (this.value === barcode) {
                 scanBox();
             }
-        }, 10);
+        }, 100);
     }
 });
 
@@ -535,14 +535,26 @@ function scanBox() {
         },
         success: function(response) {
             if (response.success) {
-                // Update progress tables which also handles completion status
-                updateProgressTables();
+                // Update progress tables
+                updateProgressTables(currentCaseData);
 
                 // Show success notification
                 showSuccessToast('Box scanned successfully!', 'Box sequence: ' + response.data.sequence);
 
-                // Clear box barcode input for next scan
+                // Check if all items are scanned
+                checkCompletion();
+
+                // Clear box barcode input
                 document.getElementById('boxBarcode').value = '';
+
+                // Focus back to box barcode input for next scan
+                // Only focus if not complete (if complete, checkCompletion will handle focus)
+                setTimeout(() => {
+                    if (document.getElementById('boxScanner').classList.contains('hidden') ===
+                        false) {
+                        document.getElementById('boxBarcode').focus();
+                    }
+                }, 100);
             } else {
                 showErrorModal(response.message);
             }
@@ -657,37 +669,36 @@ function updateProgressTables(data) {
                     });
                 }
 
-                // Check completion status and update UI accordingly
+                // Check completion and show submit button
+                if (data.scannedBoxes >= data.totalBoxes && data.totalBoxes > 0) {
+                    showSubmitButton(data.totalBoxes);
+                }
+
+                // Cek jika sudah complete, sembunyikan box scanner, tampilkan submitContainer (bukan finalBarcodeScanner)
                 if (data.scannedBoxes >= data.totalBoxes && data.totalBoxes > 0) {
                     document.getElementById('boxScanner').classList.add('hidden');
                     const submit = document.getElementById('submitContainer');
                     submit.classList.remove('hidden');
-
-                    // Show completion notification and focus on final barcode input
-                    showSuccessToast(
-                        'All boxes scanned!',
-                        'Please scan final barcode or click submit button to complete the case.'
-                    );
-
                     setTimeout(() => {
                         submit.classList.add('visible');
                         document.getElementById('finalBarcode').focus();
-                    }, 50); // Short delay to ensure UI is updated
+                        // Hapus attachFinalBarcodeListeners() karena sudah menggunakan event delegation
+                    }, 100);
                 } else {
                     document.getElementById('boxScanner').classList.remove('hidden');
                     const submit = document.getElementById('submitContainer');
                     submit.classList.remove('visible');
                     setTimeout(() => {
                         submit.classList.add('hidden');
-                    }, 300);
+                    }, 500);
 
-                    // Focus back to box barcode input for the next scan
+                    // Focus back to box barcode input if box scanner is visible
                     setTimeout(() => {
-                        if (!document.getElementById('boxScanner').classList.contains(
-                                'hidden')) {
+                        if (document.getElementById('boxScanner').classList.contains('hidden') ===
+                            false) {
                             document.getElementById('boxBarcode').focus();
                         }
-                    }, 50); // Short delay for focus
+                    }, 600);
                 }
             }
         },
@@ -715,6 +726,33 @@ function showSubmitButton(totalExpected) {
     }, 500); // Delay 500ms untuk memastikan element sudah terrender
 }
 
+// Update fungsi checkCompletion untuk langsung focus jika sudah complete
+function checkCompletion() {
+    if (!currentCaseId) return;
+
+    // Fetch latest progress from server
+    $.ajax({
+        url: `/api/casemark/get-case-progress/${currentCaseId}`,
+        method: 'GET',
+        success: function(response) {
+            if (response.success) {
+                const data = response.data;
+                if (data.scannedBoxes >= data.totalBoxes && data.totalBoxes > 0) {
+                    showSubmitButton(data.totalBoxes);
+
+                    // Show completion notification dengan instruksi
+                    showSuccessToast(
+                        'All boxes scanned!',
+                        'Please scan final barcode or click submit button to complete the case.'
+                    );
+                }
+            }
+        },
+        error: function(xhr) {
+            console.error('Error checking completion:', xhr);
+        }
+    });
+}
 
 function submitCase() {
     if (!currentCaseData) return;
