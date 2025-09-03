@@ -9,52 +9,9 @@
         <h1 class="text-2xl font-bold text-gray-900">CONTENT-LIST HISTORY</h1>
     </div>
 
-    <!-- Search and Filters -->
-    <form method="GET" action="{{ route('casemark.history') }}" class="mb-6 flex items-center justify-between">
-        <!-- Filters -->
-        <div class="flex items-center space-x-4">
-            <!-- Case No Filter -->
-            <div class="relative">
-                <select name="case_no" id="caseNoFilter"
-                    class="appearance-none bg-[#0A2856] text-white px-4 py-2 pr-8 rounded focus:outline-none focus:ring-2 focus:ring-[#0A2856]">
-                    <option value="">All Case No</option>
-                    @foreach($allPackedCases->unique('case_no') as $case)
-                    <option value="{{ $case->case_no }}" {{ request('case_no') == $case->case_no ? 'selected' : '' }}>{{ $case->case_no }}</option>
-                    @endforeach
-                </select>
-                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-white">
-                    <i class="fas fa-chevron-down"></i>
-                </div>
-            </div>
-
-            <!-- Production Month Filter -->
-            <div class="relative">
-                <select name="prod_month" id="prodMonthFilter"
-                    class="appearance-none bg-[#0A2856] text-white px-4 py-2 pr-8 rounded focus:outline-none focus:ring-2 focus:ring-[#0A2856]">
-                    <option value="">All Prod. Month</option>
-                    @foreach($allPackedCases->unique('prod_month') as $case)
-                    <option value="{{ $case->prod_month }}" {{ request('prod_month') == $case->prod_month ? 'selected' : '' }}>{{ $case->prod_month }}</option>
-                    @endforeach
-                </select>
-                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-white">
-                    <i class="fas fa-chevron-down"></i>
-                </div>
-            </div>
-        </div>
-
-        <!-- Search -->
-        <div class="relative">
-            <input type="text" name="search" placeholder="Search..." value="{{ request('search') }}"
-                class="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <i class="fas fa-search text-gray-400"></i>
-            </div>
-        </div>
-    </form>
-
     <!-- Cases Table -->
     <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
+        <table id="historyTable" class="min-w-full divide-y divide-gray-200">
             <thead class="bg-[#0A2856]">
                 <tr>
                     <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">No.</th>
@@ -74,7 +31,7 @@
                     data-case-no="{{ $case->case_no }}"
                     data-prod-month="{{ $case->prod_month }}">
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {{ $cases->firstItem() + $index }}.
+                        {{ $index + 1 }}.
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $case->case_no }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $case->destination }}</td>
@@ -108,52 +65,24 @@
                 </tr>
                 @endforelse
             </tbody>
+            <tfoot>
+                <tr>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                </tr>
+            </tfoot>
         </table>
     </div>
 
     <!-- Pagination -->
-    @if($cases->hasPages())
-    <div class="mt-6 flex items-center justify-between">
-        <div class="text-sm text-gray-700">
-            Showing {{ $cases->firstItem() }} to {{ $cases->lastItem() }} of {{ $cases->total() }} results
-        </div>
-
-        <div class="flex items-center space-x-2">
-            {{-- Previous Page Link --}}
-            @if ($cases->onFirstPage())
-            <span class="px-3 py-2 text-gray-400 cursor-not-allowed">
-                <i class="fas fa-chevron-left"></i>
-            </span>
-            @else
-            <a href="{{ $cases->previousPageUrl() }}" class="px-3 py-2 text-gray-600 hover:text-gray-900">
-                <i class="fas fa-chevron-left"></i>
-            </a>
-            @endif
-
-            {{-- Pagination Elements --}}
-            @foreach ($cases->getUrlRange(1, $cases->lastPage()) as $page => $url)
-            @if ($page == $cases->currentPage())
-            <span class="px-3 py-2 bg-blue-600 text-white rounded">{{ $page }}</span>
-            @elseif($page == 1 || $page == $cases->lastPage() || abs($page - $cases->currentPage()) <= 2)
-                <a href="{{ $url }}" class="px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded">{{ $page }}</a>
-                @elseif(abs($page - $cases->currentPage()) == 3)
-                <span class="px-3 py-2 text-gray-400">...</span>
-                @endif
-                @endforeach
-
-                {{-- Next Page Link --}}
-                @if ($cases->hasMorePages())
-                <a href="{{ $cases->nextPageUrl() }}" class="px-3 py-2 text-gray-600 hover:text-gray-900">
-                    <i class="fas fa-chevron-right"></i>
-                </a>
-                @else
-                <span class="px-3 py-2 text-gray-400 cursor-not-allowed">
-                    <i class="fas fa-chevron-right"></i>
-                </span>
-                @endif
-        </div>
-    </div>
-    @endif
+    {{-- Pagination removed - DataTables handles pagination on client-side --}}
 
     <!-- Summary Statistics -->
     <div class="mt-8 grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -182,22 +111,40 @@
 
 @section('scripts')
 <script>
-    // Auto-submit forms when filters change
-    document.getElementById('caseNoFilter').addEventListener('change', function() {
-        this.closest('form').submit();
-    });
+    $(document).ready(function() {
+        $('#historyTable').DataTable({
+            initComplete: function () {
+                this.api()
+                    .columns()
+                    .every(function () {
+                        let column = this;
+                        let title = column.header().textContent;
+                        let input = document.createElement('input');
+                        input.placeholder = title;
+                        input.className = 'border border-gray-300 rounded-md px-2 py-1 text-sm w-full focus:outline-none focus:ring-2 focus:ring-[#0A2856] focus:border-[#0A2856]';
 
-    document.getElementById('prodMonthFilter').addEventListener('change', function() {
-        this.closest('form').submit();
-    });
+                        if (column.footer() && column.footer().textContent !== undefined) {
+                            column.footer().replaceChildren(input);
+                        }
 
-    // Auto-submit search form with debounce
-    let searchTimeout;
-    document.querySelector('input[name="search"]').addEventListener('input', function() {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(() => {
-            this.closest('form').submit();
-        }, 500); // Submit after 500ms of no typing
+                        input.addEventListener('keyup', () => {
+                            if (column.search() !== input.value) {
+                                column.search(input.value).draw();
+                            }
+                        });
+                    });
+            },
+            pageLength: 10,
+            lengthMenu: [[10, 25, 50, -1], [10, 25, 50, 'All']],
+            language: {
+                search: 'Search:',
+                lengthMenu: 'Show _MENU_ entries per page',
+                info: 'Showing _START_ to _END_ of _TOTAL_ entries',
+                infoEmpty: 'Showing 0 to 0 of 0 entries',
+                infoFiltered: '(filtered from _MAX_ total entries)',
+                paginate: { first: 'First', last: 'Last', next: 'Next', previous: 'Previous' }
+            }
+        });
     });
 
     // Auto-refresh every 60 seconds

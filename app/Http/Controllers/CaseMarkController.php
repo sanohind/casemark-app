@@ -80,10 +80,8 @@ class CaseMarkController extends Controller
             });
         }
         
-        $cases = $query->orderBy('packing_date', 'desc')->paginate(10);
-        
-        // Append current filters to pagination links
-        $cases->appends($request->only(['case_no', 'prod_month', 'search']));
+        // Return full collection for DataTables client-side pagination
+        $cases = $query->orderBy('packing_date', 'desc')->get();
         
         // Get all packed cases for filter options (not paginated)
         $allPackedCases = CaseModel::where('status', 'packed')
@@ -319,10 +317,8 @@ class CaseMarkController extends Controller
             });
         }
         
-        $cases = $query->orderBy('updated_at', 'desc')->paginate(10);
-        
-        // Append current filters to pagination links
-        $cases->appends($request->only(['status', 'prod_month', 'search']));
+        // Return full collection for DataTables client-side pagination
+        $cases = $query->orderBy('updated_at', 'desc')->get();
         
         // Get statistics from all cases (not paginated)
         $allCases = CaseModel::with(['contentLists', 'scanHistory']);

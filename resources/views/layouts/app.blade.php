@@ -13,6 +13,8 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- DataTables CSS -->
+    <link href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css" rel="stylesheet">
     <style>
     .sanoh-blue {
         background-color: #1e3a8a;
@@ -128,6 +130,164 @@
     }
     .sanoh-darkblue-border {
         border-color: #0A2856 !important;
+    }
+    /* DataTables Custom Styling (aligned with FG app) */
+    .dataTables_wrapper .dataTables_length select {
+        border: 1px solid #d1d5db;
+        border-radius: 0.375rem;
+        padding: 0.25rem 0.75rem;
+        font-size: 0.875rem;
+        outline: none;
+    }
+
+    .dataTables_wrapper .dataTables_length select:focus {
+        border-color: #0A2856;
+        box-shadow: 0 0 0 2px rgba(10, 40, 86, 0.1);
+    }
+
+    .dataTables_wrapper .dataTables_filter input {
+        border: 1px solid #d1d5db;
+        border-radius: 0.375rem;
+        padding: 0.25rem 0.75rem;
+        font-size: 0.875rem;
+        outline: none;
+        margin-left: 0.5rem;
+    }
+
+    .dataTables_wrapper .dataTables_filter input:focus {
+        border-color: #0A2856;
+        box-shadow: 0 0 0 2px rgba(10, 40, 86, 0.1);
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button {
+        border: 1px solid #d1d5db;
+        background: white;
+        color: #374151;
+        padding: 0.25rem 0.75rem;
+        font-size: 0.875rem;
+        border-radius: 0.375rem;
+        margin: 0 0.125rem;
+        cursor: pointer;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+        background: #f9fafb;
+        color: #111827;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+        background: #0A2856;
+        color: white !important;
+        border-color: #0A2856;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+        background: #0A2856;
+        color: white !important;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
+        color: #9ca3af;
+        cursor: not-allowed;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button.disabled:hover {
+        background: white;
+        color: #9ca3af;
+    }
+
+    .dataTables_wrapper .dataTables_info {
+        font-size: 0.875rem;
+        color: #374151;
+    }
+
+    .dataTables_wrapper .dataTables_processing {
+        background: white;
+        border: 1px solid #d1d5db;
+        border-radius: 0.5rem;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Individual column search inputs */
+    .dataTables_wrapper tfoot input {
+        border: 1px solid #d1d5db;
+        border-radius: 0.375rem;
+        padding: 0.125rem 0.5rem;
+        font-size: 0.875rem;
+        width: 100%;
+        outline: none;
+    }
+
+    .dataTables_wrapper tfoot input:focus {
+        border-color: #0A2856;
+        box-shadow: 0 0 0 2px rgba(10, 40, 86, 0.1);
+    }
+
+    /* Table styling */
+    .dataTables_wrapper .dataTable {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .dataTables_wrapper .dataTable thead th {
+        background-color: #0A2856;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        text-align: left;
+        font-size: 0.75rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .dataTables_wrapper .dataTable tbody td {
+        padding: 0.75rem 1.5rem;
+        white-space: nowrap;
+        font-size: 0.875rem;
+        color: #111827;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .dataTables_wrapper .dataTable tbody tr:hover {
+        background-color: #f9fafb;
+    }
+
+    /* Responsive adjustments */
+    .dataTables_wrapper .dataTables_length,
+    .dataTables_wrapper .dataTables_filter {
+        margin-bottom: 1rem;
+    }
+
+    .dataTables_wrapper .dataTables_info,
+    .dataTables_wrapper .dataTables_paginate {
+        margin-top: 1rem;
+    }
+
+    /* Layout improvements */
+    .dataTables_wrapper .dataTables_length,
+    .dataTables_wrapper .dataTables_filter {
+        display: inline-block;
+        margin-bottom: 1rem;
+    }
+
+    .dataTables_wrapper .dataTables_filter {
+        float: right;
+    }
+
+    .dataTables_wrapper .dataTables_info,
+    .dataTables_wrapper .dataTables_paginate {
+        display: inline-block;
+        margin-top: 1rem;
+    }
+
+    .dataTables_wrapper .dataTables_paginate {
+        float: right;
+    }
+
+    .dataTables_wrapper::after {
+        content: "";
+        display: table;
+        clear: both;
     }
     </style>
 </head>
@@ -287,6 +447,7 @@
 
     <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
     <script>
     // CSRF Token setup for AJAX
     $.ajaxSetup({
