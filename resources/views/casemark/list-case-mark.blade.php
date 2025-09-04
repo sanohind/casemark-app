@@ -9,6 +9,28 @@
         <h1 class="text-2xl font-bold text-gray-900">LIST CASE MARK</h1>
     </div>
 
+    <!-- Date Range Search -->
+    <div class="mb-6 bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+        <div class="flex flex-col sm:flex-row gap-4 items-end">
+            <div class="flex-1">
+                <label for="startDate" class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                <input type="date" id="startDate" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0A2856] focus:border-[#0A2856]">
+            </div>
+            <div class="flex-1">
+                <label for="endDate" class="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                <input type="date" id="endDate" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0A2856] focus:border-[#0A2856]">
+            </div>
+            <div class="flex gap-2">
+                <button id="filterDateBtn" class="px-4 py-2 bg-[#0A2856] text-white rounded-md hover:bg-[#0A2856]/90 text-sm font-medium">
+                    <i class="fas fa-search mr-1"></i>Filter
+                </button>
+                <button id="clearDateBtn" class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 text-sm font-medium">
+                    <i class="fas fa-times mr-1"></i>Clear
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Cases Table -->
     <div class="overflow-x-auto">
         <table id="casesTable" class="min-w-full divide-y divide-gray-200">
@@ -17,20 +39,29 @@
                     <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">No.</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Case No</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Part No</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Prod. Month
-                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Prod. Month</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Total</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Packing Date
-                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Packing Date</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Status</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Action</th>
+                </tr>
+                <!-- Search Row -->
+                <tr class="bg-gray-100">
+                    <th class="px-6 py-2"></th>
+                    <th class="px-6 py-2"></th>
+                    <th class="px-6 py-2"></th>
+                    <th class="px-6 py-2"></th>
+                    <th class="px-6 py-2"></th>
+                    <th class="px-6 py-2"></th>
+                    <th class="px-6 py-2"></th>
+                    <th class="px-6 py-2"></th>
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
                 @forelse($cases as $index => $case)
                 @php
-                    $hasScanHistory = $case->scanHistory()->exists();
-                    $status = $case->status == 'packed' ? 'packed' : ($hasScanHistory ? 'in-progress' : 'unpacked');
+                $hasScanHistory = $case->scanHistory()->exists();
+                $status = $case->status == 'packed' ? 'packed' : ($hasScanHistory ? 'in-progress' : 'unpacked');
                 @endphp
                 <tr class="{{ $index % 2 == 0 ? 'bg-white' : 'bg-gray-50' }}" data-prod-month="{{ $case->prod_month }}" data-status="{{ $status }}">
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $index + 1 }}.
@@ -93,18 +124,6 @@
                 </tr>
                 @endforelse
             </tbody>
-            <tfoot>
-                <tr>
-                    <th></th>
-                    <th></th>
-                    <th></th>
-                    <th></th>
-                    <th></th>
-                    <th></th>
-                    <th></th>
-                    <th></th>
-                </tr>
-            </tfoot>
         </table>
     </div>
 
@@ -151,36 +170,75 @@
 <script>
     $(document).ready(function() {
         $('#casesTable').DataTable({
-            initComplete: function () {
+            orderCellsTop: true, // Menggunakan baris pertama untuk sorting
+            fixedHeader: true,
+            initComplete: function() {
+                // Menambahkan search input ke baris kedua di thead
                 this.api()
                     .columns()
-                    .every(function () {
+                    .every(function(colIdx) {
                         let column = this;
                         let title = column.header().textContent;
-                        let input = document.createElement('input');
-                        input.placeholder = title;
-                        input.className = 'border border-gray-300 rounded-md px-2 py-1 text-sm w-full focus:outline-none focus:ring-2 focus:ring-[#0A2856] focus:border-[#0A2856]';
 
-                        if (column.footer() && column.footer().textContent !== undefined) {
-                            column.footer().replaceChildren(input);
+                        // Skip kolom No. dan Action (kolom 0 dan 7)
+                        if (colIdx === 0 || colIdx === 7) {
+                            return;
                         }
 
-                        input.addEventListener('keyup', () => {
-                            if (column.search() !== input.value) {
-                                column.search(input.value).draw();
-                            }
-                        });
+                        let input = document.createElement('input');
+                        // Buat placeholder yang lebih pendek berdasarkan nama kolom
+                        let placeholder = '';
+                        switch (colIdx) {
+                            case 1:
+                                placeholder = 'Case No';
+                                break;
+                            case 2:
+                                placeholder = 'Part No';
+                                break;
+                            case 3:
+                                placeholder = 'Prod. Month';
+                                break;
+                            case 4:
+                                placeholder = 'Total';
+                                break;
+                            case 5:
+                                placeholder = 'Packing Date';
+                                break;
+                            case 6:
+                                placeholder = 'Status';
+                                break;
+                            default:
+                                placeholder = title;
+                        }
+                        input.placeholder = placeholder;
+                        input.className = 'border border-gray-300 rounded-md px-2 py-1 text-xs w-full focus:outline-none focus:ring-2 focus:ring-[#0A2856] focus:border-[#0A2856] bg-white min-w-0';
+
+                        // Menambahkan input ke baris kedua (search row) di thead
+                        $(input).appendTo($(column.header()).parent().next().find('th').eq(colIdx))
+                            .on('keyup change clear', function() {
+                                if (column.search() !== this.value) {
+                                    column.search(this.value).draw();
+                                }
+                            });
                     });
             },
             pageLength: 10,
-            lengthMenu: [[10, 25, 50, -1], [10, 25, 50, 'All']],
+            lengthMenu: [
+                [10, 25, 50, -1],
+                [10, 25, 50, 'All']
+            ],
             language: {
                 search: 'Search:',
                 lengthMenu: 'Show _MENU_ entries per page',
                 info: 'Showing _START_ to _END_ of _TOTAL_ entries',
                 infoEmpty: 'Showing 0 to 0 of 0 entries',
                 infoFiltered: '(filtered from _MAX_ total entries)',
-                paginate: { first: 'First', last: 'Last', next: 'Next', previous: 'Previous' }
+                paginate: {
+                    first: 'First',
+                    last: 'Last',
+                    next: 'Next',
+                    previous: 'Previous'
+                }
             }
         });
     });
@@ -225,6 +283,62 @@
 
         closeModal();
     }
+
+    // Date range filter functionality
+    $('#filterDateBtn').on('click', function() {
+        const startDate = $('#startDate').val();
+        const endDate = $('#endDate').val();
+
+        if (!startDate && !endDate) {
+            alert('Please select at least one date');
+            return;
+        }
+
+        // Custom search function for date range
+        $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+            if (settings.nTable.id !== 'casesTable') {
+                return true;
+            }
+
+            const packingDateStr = data[5]; // Packing Date column (0-indexed)
+
+            if (!packingDateStr || packingDateStr === '-') {
+                return false; // Hide rows without packing date
+            }
+
+            // Parse the date from format "dd/mm/yyyy hh:mm"
+            const dateParts = packingDateStr.split(' ')[0].split('/');
+            if (dateParts.length !== 3) return false;
+
+            const rowDate = new Date(dateParts[2], dateParts[1] - 1, dateParts[0]);
+
+            if (startDate && endDate) {
+                const start = new Date(startDate);
+                const end = new Date(endDate);
+                return rowDate >= start && rowDate <= end;
+            } else if (startDate) {
+                const start = new Date(startDate);
+                return rowDate >= start;
+            } else if (endDate) {
+                const end = new Date(endDate);
+                return rowDate <= end;
+            }
+
+            return true;
+        });
+
+        $('#casesTable').DataTable().draw();
+    });
+
+    $('#clearDateBtn').on('click', function() {
+        $('#startDate').val('');
+        $('#endDate').val('');
+
+        // Remove all custom search functions
+        $.fn.dataTable.ext.search = [];
+
+        $('#casesTable').DataTable().draw();
+    });
 
     // Optional: keep auto-refresh
     // Auto-refresh every 60 seconds

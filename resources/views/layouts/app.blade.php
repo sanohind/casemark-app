@@ -16,279 +16,321 @@
     <!-- DataTables CSS -->
     <link href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css" rel="stylesheet">
     <style>
-    .sanoh-blue {
-        background-color: #1e3a8a;
-    }
+        .sanoh-blue {
+            background-color: #1e3a8a;
+        }
 
-    .sanoh-blue-light {
-        background-color: #3b82f6;
-    }
+        .sanoh-blue-light {
+            background-color: #3b82f6;
+        }
 
-    .progress-bar {
-        background: linear-gradient(90deg, #fbbf24 0%, #fbbf24 100%);
-    }
+        .progress-bar {
+            background: linear-gradient(90deg, #fbbf24 0%, #fbbf24 100%);
+        }
 
-    /* Fixed header styles */
-    .fixed-header {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        z-index: 50;
-        background: white;
-    }
-
-    /* Desktop sidebar styles */
-    .fixed-sidebar {
-        position: fixed;
-        top: 80px;
-        /* Height of header */
-        left: 0;
-        bottom: 0;
-        width: 256px;
-        /* w-64 = 16rem = 256px */
-        z-index: 40;
-        overflow-y: auto;
-        transition: transform 0.3s ease-in-out;
-    }
-
-    /* Mobile sidebar styles */
-    @media (max-width: 1023px) {
-        .fixed-sidebar {
-            transform: translateX(-100%);
+        /* Fixed header styles */
+        .fixed-header {
+            position: fixed;
             top: 0;
-            height: 100vh;
-            z-index: 60;
+            left: 0;
+            right: 0;
+            z-index: 50;
+            background: white;
         }
 
-        .fixed-sidebar.show {
-            transform: translateX(0);
+        /* Desktop sidebar styles */
+        .fixed-sidebar {
+            position: fixed;
+            top: 80px;
+            /* Height of header */
+            left: 0;
+            bottom: 0;
+            width: 256px;
+            /* w-64 = 16rem = 256px */
+            z-index: 40;
+            overflow-y: auto;
+            transition: transform 0.3s ease-in-out;
         }
-    }
 
-    /* Desktop content layout */
-    .content-with-fixed-layout {
-        margin-top: 80px;
-        /* Height of header */
-        margin-left: 256px;
-        /* Width of sidebar */
-        min-height: calc(100vh - 80px);
-    }
+        /* Mobile sidebar styles */
+        @media (max-width: 1023px) {
+            .fixed-sidebar {
+                transform: translateX(-100%);
+                top: 0;
+                height: 100vh;
+                z-index: 60;
+            }
 
-    /* Mobile content layout */
-    @media (max-width: 1023px) {
+            .fixed-sidebar.show {
+                transform: translateX(0);
+            }
+        }
+
+        /* Desktop content layout */
         .content-with-fixed-layout {
-            margin-left: 0;
+            margin-top: 80px;
+            /* Height of header */
+            margin-left: 256px;
+            /* Width of sidebar */
+            min-height: calc(100vh - 80px);
         }
-    }
 
-    /* Overlay for mobile */
-    .sidebar-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-color: rgba(0, 0, 0, 0.5);
-        z-index: 55;
-        opacity: 0;
-        visibility: hidden;
-        transition: all 0.3s ease-in-out;
-    }
+        /* Mobile content layout */
+        @media (max-width: 1023px) {
+            .content-with-fixed-layout {
+                margin-left: 0;
+            }
+        }
 
-    .sidebar-overlay.show {
-        opacity: 1;
-        visibility: visible;
-    }
+        /* Overlay for mobile */
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 55;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease-in-out;
+        }
 
-    /* Hamburger menu animation */
-    .hamburger-line {
-        width: 24px;
-        height: 2px;
-        background-color: #374151;
-        transition: all 0.3s ease;
-        transform-origin: center;
-    }
+        .sidebar-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
 
-    .hamburger.active .hamburger-line:nth-child(1) {
-        transform: rotate(45deg) translate(5px, 5px);
-    }
+        /* Hamburger menu animation */
+        .hamburger-line {
+            width: 24px;
+            height: 2px;
+            background-color: #374151;
+            transition: all 0.3s ease;
+            transform-origin: center;
+        }
 
-    .hamburger.active .hamburger-line:nth-child(2) {
-        opacity: 0;
-    }
+        .hamburger.active .hamburger-line:nth-child(1) {
+            transform: rotate(45deg) translate(5px, 5px);
+        }
 
-    .hamburger.active .hamburger-line:nth-child(3) {
-        transform: rotate(-45deg) translate(7px, -6px);
-    }
-    .sanoh-darkblue {
-        background-color: #0A2856 !important;
-        color: #fff !important;
-    }
-    .sanoh-darkblue-text {
-        color: #0A2856 !important;
-    }
-    .sanoh-darkblue-border {
-        border-color: #0A2856 !important;
-    }
-    /* DataTables Custom Styling (aligned with FG app) */
-    .dataTables_wrapper .dataTables_length select {
-        border: 1px solid #d1d5db;
-        border-radius: 0.375rem;
-        padding: 0.25rem 0.75rem;
-        font-size: 0.875rem;
-        outline: none;
-    }
+        .hamburger.active .hamburger-line:nth-child(2) {
+            opacity: 0;
+        }
 
-    .dataTables_wrapper .dataTables_length select:focus {
-        border-color: #0A2856;
-        box-shadow: 0 0 0 2px rgba(10, 40, 86, 0.1);
-    }
+        .hamburger.active .hamburger-line:nth-child(3) {
+            transform: rotate(-45deg) translate(7px, -6px);
+        }
 
-    .dataTables_wrapper .dataTables_filter input {
-        border: 1px solid #d1d5db;
-        border-radius: 0.375rem;
-        padding: 0.25rem 0.75rem;
-        font-size: 0.875rem;
-        outline: none;
-        margin-left: 0.5rem;
-    }
+        .sanoh-darkblue {
+            background-color: #0A2856 !important;
+            color: #fff !important;
+        }
 
-    .dataTables_wrapper .dataTables_filter input:focus {
-        border-color: #0A2856;
-        box-shadow: 0 0 0 2px rgba(10, 40, 86, 0.1);
-    }
+        .sanoh-darkblue-text {
+            color: #0A2856 !important;
+        }
 
-    .dataTables_wrapper .dataTables_paginate .paginate_button {
-        border: 1px solid #d1d5db;
-        background: white;
-        color: #374151;
-        padding: 0.25rem 0.75rem;
-        font-size: 0.875rem;
-        border-radius: 0.375rem;
-        margin: 0 0.125rem;
-        cursor: pointer;
-    }
+        .sanoh-darkblue-border {
+            border-color: #0A2856 !important;
+        }
 
-    .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
-        background: #f9fafb;
-        color: #111827;
-    }
+        /* DataTables Custom Styling (aligned with FG app) */
+        .dataTables_wrapper .dataTables_length select {
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            padding: 0.25rem 0.75rem;
+            font-size: 0.875rem;
+            outline: none;
+        }
 
-    .dataTables_wrapper .dataTables_paginate .paginate_button.current {
-        background: #0A2856;
-        color: white !important;
-        border-color: #0A2856;
-    }
+        .dataTables_wrapper .dataTables_length select:focus {
+            border-color: #0A2856;
+            box-shadow: 0 0 0 2px rgba(10, 40, 86, 0.1);
+        }
 
-    .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
-        background: #0A2856;
-        color: white !important;
-    }
+        .dataTables_wrapper .dataTables_filter input {
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            padding: 0.25rem 0.75rem;
+            font-size: 0.875rem;
+            outline: none;
+            margin-left: 0.5rem;
+        }
 
-    .dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
-        color: #9ca3af;
-        cursor: not-allowed;
-    }
+        .dataTables_wrapper .dataTables_filter input:focus {
+            border-color: #0A2856;
+            box-shadow: 0 0 0 2px rgba(10, 40, 86, 0.1);
+        }
 
-    .dataTables_wrapper .dataTables_paginate .paginate_button.disabled:hover {
-        background: white;
-        color: #9ca3af;
-    }
+        .dataTables_wrapper .dataTables_paginate .paginate_button {
+            border: 1px solid #d1d5db;
+            background: white;
+            color: #374151;
+            padding: 0.25rem 0.75rem;
+            font-size: 0.875rem;
+            border-radius: 0.375rem;
+            margin: 0 0.125rem;
+            cursor: pointer;
+        }
 
-    .dataTables_wrapper .dataTables_info {
-        font-size: 0.875rem;
-        color: #374151;
-    }
+        .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+            background: #f9fafb;
+            color: #111827;
+        }
 
-    .dataTables_wrapper .dataTables_processing {
-        background: white;
-        border: 1px solid #d1d5db;
-        border-radius: 0.5rem;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-    }
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+            background: #0A2856;
+            color: white !important;
+            border-color: #0A2856;
+        }
 
-    /* Individual column search inputs */
-    .dataTables_wrapper tfoot input {
-        border: 1px solid #d1d5db;
-        border-radius: 0.375rem;
-        padding: 0.125rem 0.5rem;
-        font-size: 0.875rem;
-        width: 100%;
-        outline: none;
-    }
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+            background: #0A2856;
+            color: white !important;
+        }
 
-    .dataTables_wrapper tfoot input:focus {
-        border-color: #0A2856;
-        box-shadow: 0 0 0 2px rgba(10, 40, 86, 0.1);
-    }
+        .dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
+            color: #9ca3af;
+            cursor: not-allowed;
+        }
 
-    /* Table styling */
-    .dataTables_wrapper .dataTable {
-        width: 100%;
-        border-collapse: collapse;
-    }
+        .dataTables_wrapper .dataTables_paginate .paginate_button.disabled:hover {
+            background: white;
+            color: #9ca3af;
+        }
 
-    .dataTables_wrapper .dataTable thead th {
-        background-color: #0A2856;
-        color: white;
-        padding: 0.75rem 1.5rem;
-        text-align: left;
-        font-size: 0.75rem;
-        font-weight: 500;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-    }
+        .dataTables_wrapper .dataTables_info {
+            font-size: 0.875rem;
+            color: #374151;
+        }
 
-    .dataTables_wrapper .dataTable tbody td {
-        padding: 0.75rem 1.5rem;
-        white-space: nowrap;
-        font-size: 0.875rem;
-        color: #111827;
-        border-bottom: 1px solid #e5e7eb;
-    }
+        .dataTables_wrapper .dataTables_processing {
+            background: white;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
 
-    .dataTables_wrapper .dataTable tbody tr:hover {
-        background-color: #f9fafb;
-    }
+        /* Individual column search inputs */
+        .dataTables_wrapper tfoot input {
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            padding: 0.125rem 0.5rem;
+            font-size: 0.875rem;
+            width: 100%;
+            outline: none;
+        }
 
-    /* Responsive adjustments */
-    .dataTables_wrapper .dataTables_length,
-    .dataTables_wrapper .dataTables_filter {
-        margin-bottom: 1rem;
-    }
+        .dataTables_wrapper tfoot input:focus {
+            border-color: #0A2856;
+            box-shadow: 0 0 0 2px rgba(10, 40, 86, 0.1);
+        }
 
-    .dataTables_wrapper .dataTables_info,
-    .dataTables_wrapper .dataTables_paginate {
-        margin-top: 1rem;
-    }
+        /* Table styling */
+        .dataTables_wrapper .dataTable {
+            width: 100%;
+            border-collapse: collapse;
+        }
 
-    /* Layout improvements */
-    .dataTables_wrapper .dataTables_length,
-    .dataTables_wrapper .dataTables_filter {
-        display: inline-block;
-        margin-bottom: 1rem;
-    }
+        .dataTables_wrapper .dataTable thead th {
+            background-color: #0A2856;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            text-align: left;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
 
-    .dataTables_wrapper .dataTables_filter {
-        float: right;
-    }
+        .dataTables_wrapper .dataTable tbody td {
+            padding: 0.75rem 1.5rem;
+            white-space: nowrap;
+            font-size: 0.875rem;
+            color: #111827;
+            border-bottom: 1px solid #e5e7eb;
+        }
 
-    .dataTables_wrapper .dataTables_info,
-    .dataTables_wrapper .dataTables_paginate {
-        display: inline-block;
-        margin-top: 1rem;
-    }
+        .dataTables_wrapper .dataTable tbody tr:hover {
+            background-color: #f9fafb;
+        }
 
-    .dataTables_wrapper .dataTables_paginate {
-        float: right;
-    }
+        /* Responsive adjustments */
+        .dataTables_wrapper .dataTables_length,
+        .dataTables_wrapper .dataTables_filter {
+            margin-bottom: 1rem;
+        }
 
-    .dataTables_wrapper::after {
-        content: "";
-        display: table;
-        clear: both;
-    }
+        .dataTables_wrapper .dataTables_info,
+        .dataTables_wrapper .dataTables_paginate {
+            margin-top: 1rem;
+        }
+
+        /* Layout improvements */
+        .dataTables_wrapper .dataTables_length,
+        .dataTables_wrapper .dataTables_filter {
+            display: inline-block;
+            margin-bottom: 1rem;
+        }
+
+        .dataTables_wrapper .dataTables_filter {
+            float: right;
+        }
+
+        .dataTables_wrapper .dataTables_info,
+        .dataTables_wrapper .dataTables_paginate {
+            display: inline-block;
+            margin-top: 1rem;
+        }
+
+        .dataTables_wrapper .dataTables_paginate {
+            float: right;
+        }
+
+        .dataTables_wrapper::after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+
+        /* Search row styling */
+        .dataTables_wrapper .dataTable thead tr:nth-child(2) th {
+            background-color: #ffffff !important;
+            color: #374151 !important;
+            padding: 0.5rem 1.5rem;
+            border-bottom: 1px solid #d1d5db;
+        }
+
+        /* Search input styling in header */
+        .dataTables_wrapper .dataTable thead input {
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            /* Ukuran font lebih kecil */
+            width: 100%;
+            min-width: 0;
+            /* Memungkinkan input menyusut lebih kecil */
+            outline: none;
+            background-color: white;
+            box-sizing: border-box;
+        }
+
+        .dataTables_wrapper .dataTable thead input:focus {
+            border-color: #0A2856;
+            box-shadow: 0 0 0 2px rgba(10, 40, 86, 0.1);
+        }
+
+        /* Ensure proper spacing and alignment */
+        .dataTables_wrapper .dataTable thead th {
+            vertical-align: middle;
+        }
+
+        /* Remove the old tfoot styling since we're not using it anymore */
+        .dataTables_wrapper tfoot {
+            display: none;
+        }
     </style>
 </head>
 
@@ -315,20 +357,20 @@
                     <!-- Waktu akan tampil di sini -->
                 </div>
                 <script>
-                function updateClock() {
-                    const now = new Date();
-                    const pad = n => n.toString().padStart(2, '0');
-                    const formatted =
-                        pad(now.getDate()) + '/' +
-                        pad(now.getMonth() + 1) + '/' +
-                        now.getFullYear() + ' ' +
-                        pad(now.getHours()) + ':' +
-                        pad(now.getMinutes()) + ':' +
-                        pad(now.getSeconds());
-                    document.getElementById('realtime-clock').textContent = formatted;
-                }
-                updateClock();
-                setInterval(updateClock, 1000);
+                    function updateClock() {
+                        const now = new Date();
+                        const pad = n => n.toString().padStart(2, '0');
+                        const formatted =
+                            pad(now.getDate()) + '/' +
+                            pad(now.getMonth() + 1) + '/' +
+                            now.getFullYear() + ' ' +
+                            pad(now.getHours()) + ':' +
+                            pad(now.getMinutes()) + ':' +
+                            pad(now.getSeconds());
+                        document.getElementById('realtime-clock').textContent = formatted;
+                    }
+                    updateClock();
+                    setInterval(updateClock, 1000);
                 </script>
             </div>
         </div>
@@ -449,188 +491,188 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
     <script>
-    // CSRF Token setup for AJAX
-    $.ajaxSetup({
-        headers: {
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-        }
-    });
-
-    // Auto-hide alerts after 5 seconds
-    setTimeout(function() {
-        $('.alert').fadeOut('slow');
-    }, 5000);
-
-    // Responsive Sidebar Logic
-    $(document).ready(function() {
-        const hamburgerBtn = $('#hamburgerBtn');
-        const sidebar = $('#sidebar');
-        const sidebarOverlay = $('#sidebarOverlay');
-        const closeSidebarBtn = $('#closeSidebarBtn');
-
-        // Toggle sidebar on hamburger click
-        hamburgerBtn.on('click', function() {
-            toggleSidebar();
-        });
-
-        // Close sidebar on overlay click
-        sidebarOverlay.on('click', function() {
-            closeSidebar();
-        });
-
-        // Close sidebar on close button click
-        closeSidebarBtn.on('click', function() {
-            closeSidebar();
-        });
-
-        // Close sidebar on ESC key press
-        $(document).on('keydown', function(e) {
-            if (e.key === 'Escape') {
-                closeSidebar();
+        // CSRF Token setup for AJAX
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             }
         });
 
-        // Close sidebar when clicking on navigation links (mobile only)
-        sidebar.find('nav a').on('click', function() {
-            if (window.innerWidth < 1024) {
+        // Auto-hide alerts after 5 seconds
+        setTimeout(function() {
+            $('.alert').fadeOut('slow');
+        }, 5000);
+
+        // Responsive Sidebar Logic
+        $(document).ready(function() {
+            const hamburgerBtn = $('#hamburgerBtn');
+            const sidebar = $('#sidebar');
+            const sidebarOverlay = $('#sidebarOverlay');
+            const closeSidebarBtn = $('#closeSidebarBtn');
+
+            // Toggle sidebar on hamburger click
+            hamburgerBtn.on('click', function() {
+                toggleSidebar();
+            });
+
+            // Close sidebar on overlay click
+            sidebarOverlay.on('click', function() {
                 closeSidebar();
+            });
+
+            // Close sidebar on close button click
+            closeSidebarBtn.on('click', function() {
+                closeSidebar();
+            });
+
+            // Close sidebar on ESC key press
+            $(document).on('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeSidebar();
+                }
+            });
+
+            // Close sidebar when clicking on navigation links (mobile only)
+            sidebar.find('nav a').on('click', function() {
+                if (window.innerWidth < 1024) {
+                    closeSidebar();
+                }
+            });
+
+            function toggleSidebar() {
+                const isOpen = sidebar.hasClass('show');
+                if (isOpen) {
+                    closeSidebar();
+                } else {
+                    openSidebar();
+                }
             }
+
+            function openSidebar() {
+                sidebar.addClass('show');
+                sidebarOverlay.addClass('show');
+                hamburgerBtn.addClass('active');
+                $('body').addClass('overflow-hidden lg:overflow-auto');
+            }
+
+            function closeSidebar() {
+                sidebar.removeClass('show');
+                sidebarOverlay.removeClass('show');
+                hamburgerBtn.removeClass('active');
+                $('body').removeClass('overflow-hidden lg:overflow-auto');
+            }
+
+            // Handle window resize
+            $(window).on('resize', function() {
+                if (window.innerWidth >= 1024) {
+                    closeSidebar();
+                }
+            });
         });
 
-        function toggleSidebar() {
-            const isOpen = sidebar.hasClass('show');
-            if (isOpen) {
-                closeSidebar();
-            } else {
-                openSidebar();
-            }
-        }
+        // Global Toast Notification Functions
+        function showSuccessToast(title, message) {
+            const toast = document.getElementById('successToast');
+            if (toast) {
+                const titleEl = toast.querySelector('#toastTitle');
+                const messageEl = toast.querySelector('#toastMessage');
+                if (titleEl) titleEl.textContent = title;
+                if (messageEl) messageEl.textContent = message;
 
-        function openSidebar() {
-            sidebar.addClass('show');
-            sidebarOverlay.addClass('show');
-            hamburgerBtn.addClass('active');
-            $('body').addClass('overflow-hidden lg:overflow-auto');
-        }
-
-        function closeSidebar() {
-            sidebar.removeClass('show');
-            sidebarOverlay.removeClass('show');
-            hamburgerBtn.removeClass('active');
-            $('body').removeClass('overflow-hidden lg:overflow-auto');
-        }
-
-        // Handle window resize
-        $(window).on('resize', function() {
-            if (window.innerWidth >= 1024) {
-                closeSidebar();
-            }
-        });
-    });
-
-    // Global Toast Notification Functions
-    function showSuccessToast(title, message) {
-        const toast = document.getElementById('successToast');
-        if (toast) {
-            const titleEl = toast.querySelector('#toastTitle');
-            const messageEl = toast.querySelector('#toastMessage');
-            if (titleEl) titleEl.textContent = title;
-            if (messageEl) messageEl.textContent = message;
-
-            // Show and animate
-            toast.style.display = 'block';
-            setTimeout(() => {
-                toast.classList.remove('translate-x-full');
-                toast.classList.add('translate-x-0');
-            }, 10);
-
-            // Auto hide after 3 seconds
-            setTimeout(() => {
-                hideSuccessToast();
-            }, 3000);
-        }
-    }
-
-    function hideSuccessToast() {
-        const toast = document.getElementById('successToast');
-        if (toast) {
-            toast.classList.remove('translate-x-0');
-            toast.classList.add('translate-x-full');
-
-            // Hide completely after animation
-            setTimeout(() => {
-                toast.style.display = 'none';
-            }, 300);
-        }
-    }
-
-    function showErrorToast(title, message) {
-        const toast = document.getElementById('errorToast');
-        const audio = document.getElementById('errorAudio');
-        
-        if (toast) {
-            const messageEl = toast.querySelector('#errorToastMessage');
-            if (messageEl) messageEl.textContent = message;
-
-            // Show and animate
-            toast.style.display = 'block';
-            setTimeout(() => {
-                toast.classList.remove('translate-x-full');
-                toast.classList.add('translate-x-0');
-            }, 10);
-
-            // Play error audio for 6 seconds
-            if (audio) {
-                audio.currentTime = 0; // Reset audio to beginning
-                audio.play().catch(e => console.log('Audio play failed:', e));
-                
-                // Stop audio after 6 seconds
+                // Show and animate
+                toast.style.display = 'block';
                 setTimeout(() => {
-                    audio.pause();
-                    audio.currentTime = 0;
+                    toast.classList.remove('translate-x-full');
+                    toast.classList.add('translate-x-0');
+                }, 10);
+
+                // Auto hide after 3 seconds
+                setTimeout(() => {
+                    hideSuccessToast();
+                }, 3000);
+            }
+        }
+
+        function hideSuccessToast() {
+            const toast = document.getElementById('successToast');
+            if (toast) {
+                toast.classList.remove('translate-x-0');
+                toast.classList.add('translate-x-full');
+
+                // Hide completely after animation
+                setTimeout(() => {
+                    toast.style.display = 'none';
+                }, 300);
+            }
+        }
+
+        function showErrorToast(title, message) {
+            const toast = document.getElementById('errorToast');
+            const audio = document.getElementById('errorAudio');
+
+            if (toast) {
+                const messageEl = toast.querySelector('#errorToastMessage');
+                if (messageEl) messageEl.textContent = message;
+
+                // Show and animate
+                toast.style.display = 'block';
+                setTimeout(() => {
+                    toast.classList.remove('translate-x-full');
+                    toast.classList.add('translate-x-0');
+                }, 10);
+
+                // Play error audio for 6 seconds
+                if (audio) {
+                    audio.currentTime = 0; // Reset audio to beginning
+                    audio.play().catch(e => console.log('Audio play failed:', e));
+
+                    // Stop audio after 6 seconds
+                    setTimeout(() => {
+                        audio.pause();
+                        audio.currentTime = 0;
+                    }, 6000);
+                }
+
+                // Auto hide after 6 seconds (matching audio duration)
+                setTimeout(() => {
+                    hideErrorToast();
                 }, 6000);
             }
-
-            // Auto hide after 6 seconds (matching audio duration)
-            setTimeout(() => {
-                hideErrorToast();
-            }, 6000);
         }
-    }
 
-    function hideErrorToast() {
-        const toast = document.getElementById('errorToast');
-        const audio = document.getElementById('errorAudio');
-        
-        if (toast) {
-            toast.classList.remove('translate-x-0');
-            toast.classList.add('translate-x-full');
+        function hideErrorToast() {
+            const toast = document.getElementById('errorToast');
+            const audio = document.getElementById('errorAudio');
 
-            // Stop audio if playing
-            if (audio) {
-                audio.pause();
-                audio.currentTime = 0;
+            if (toast) {
+                toast.classList.remove('translate-x-0');
+                toast.classList.add('translate-x-full');
+
+                // Stop audio if playing
+                if (audio) {
+                    audio.pause();
+                    audio.currentTime = 0;
+                }
+
+                // Hide completely after animation
+                setTimeout(() => {
+                    toast.style.display = 'none';
+                }, 300);
             }
-
-            // Hide completely after animation
-            setTimeout(() => {
-                toast.style.display = 'none';
-            }, 300);
         }
-    }
 
-    // Test functions (optional - hapus jika tidak diperlukan)
-    function testSuccessToast() {
-        showSuccessToast('Test Success', 'This is a test success message!');
-    }
+        // Test functions (optional - hapus jika tidak diperlukan)
+        function testSuccessToast() {
+            showSuccessToast('Test Success', 'This is a test success message!');
+        }
 
-    function testErrorToast() {
-        showErrorToast('Test Error', 'This is a test error message!');
-    }
+        function testErrorToast() {
+            showErrorToast('Test Error', 'This is a test error message!');
+        }
 
-    function closeErrorToast() {
-        hideErrorToast();
-    }
+        function closeErrorToast() {
+            hideErrorToast();
+        }
     </script>
 
     @yield('scripts')
