@@ -72,7 +72,7 @@
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $case->prod_month }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $case->progress }}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" data-date="{{ $case->packing_date ? $case->packing_date->format('Y-m-d') : '' }}">
                         {{ $case->packing_date ? $case->packing_date->format('d/m/Y H:i') : '-' }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
@@ -284,7 +284,8 @@
         closeModal();
     }
 
-    // Date range filter functionality
+    // Date range filter functionality - Updated to match history.blade logic
+    let casemarkDateRangeFilter = null;
     $('#filterDateBtn').on('click', function() {
         const startDate = $('#startDate').val();
         const endDate = $('#endDate').val();
@@ -295,37 +296,50 @@
         }
 
         // Custom search function for date range
-        $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+        // Remove previously-registered date range filter for this table (if any)
+        if (casemarkDateRangeFilter) {
+            $.fn.dataTable.ext.search = $.fn.dataTable.ext.search.filter(function(fn) { return fn !== casemarkDateRangeFilter; });
+        }
+
+        casemarkDateRangeFilter = function(settings, data, dataIndex) {
             if (settings.nTable.id !== 'casesTable') {
                 return true;
             }
 
-            const packingDateStr = data[5]; // Packing Date column (0-indexed)
-
-            if (!packingDateStr || packingDateStr === '-') {
+            // Get the row element to access data-date attribute
+            const row = settings.aoData[dataIndex].nTr;
+            const dateCell = row.querySelector('td[data-date]');
+            
+            if (!dateCell) {
+                return false; // Hide rows without date data
+            }
+            
+            const rowDateStr = dateCell.getAttribute('data-date');
+            
+            if (!rowDateStr || rowDateStr === '') {
                 return false; // Hide rows without packing date
             }
-
-            // Parse the date from format "dd/mm/yyyy hh:mm"
-            const dateParts = packingDateStr.split(' ')[0].split('/');
-            if (dateParts.length !== 3) return false;
-
-            const rowDate = new Date(dateParts[2], dateParts[1] - 1, dateParts[0]);
+            
+            // Use the data-date attribute which is already in Y-m-d format
+            // This avoids timezone issues from parsing displayed date
+            const rowDate = new Date(rowDateStr + 'T00:00:00');
 
             if (startDate && endDate) {
-                const start = new Date(startDate);
-                const end = new Date(endDate);
+                const start = new Date(startDate + 'T00:00:00');
+                const end = new Date(endDate + 'T23:59:59');
                 return rowDate >= start && rowDate <= end;
             } else if (startDate) {
-                const start = new Date(startDate);
+                const start = new Date(startDate + 'T00:00:00');
                 return rowDate >= start;
             } else if (endDate) {
-                const end = new Date(endDate);
+                const end = new Date(endDate + 'T23:59:59');
                 return rowDate <= end;
             }
 
             return true;
-        });
+        };
+
+        $.fn.dataTable.ext.search.push(casemarkDateRangeFilter);
 
         $('#casesTable').DataTable().draw();
     });
@@ -334,8 +348,11 @@
         $('#startDate').val('');
         $('#endDate').val('');
 
-        // Remove all custom search functions
-        $.fn.dataTable.ext.search = [];
+        // Remove only this table's date range filter
+        if (casemarkDateRangeFilter) {
+            $.fn.dataTable.ext.search = $.fn.dataTable.ext.search.filter(function(fn) { return fn !== casemarkDateRangeFilter; });
+            casemarkDateRangeFilter = null;
+        }
 
         $('#casesTable').DataTable().draw();
     });
